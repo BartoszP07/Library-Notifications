@@ -10,6 +10,8 @@ const update_time_p = document.getElementById("update-time-p");
 
 const waiting_minutes = 30;
 
+let library_data;
+
 btn.addEventListener("click", async function(){
     await GetSpaces();
 })
@@ -23,13 +25,8 @@ async function GetSpaces(){
     try{
         const response = await fetch("/api/get-spaces");
         const data = (await response.json()).data;
+        library_data = data;
         console.log(data);
-
-        // What I want the mssage to look like
-        // There are currently x/people using the library - usage: y
-
-        let message = `There are currently ${data.total - data.free} / ${data.total} people using the library. Usage is ${data.usage}`;
-        await SendTelegram(message);
 
         // Update variables
         total_spaces_p.innerHTML = `<span style="color:gold;">${data.total}</span> Total Spaces`;
@@ -61,7 +58,11 @@ async function SendTelegram(message){
 
 // 30 Mins
 setInterval(async function(){
+    // Get spaces
     await GetSpaces();
+    // Send message
+    let message = `There are currently ${library_data.total - library_data.free} / ${library_data.total} people using the library. Usage is ${data.usage}`;
+    await SendTelegram(message);
 }, 60000 * waiting_minutes);
 
 // 5 Seconds
