@@ -51,6 +51,6 @@ app.post("/api/send-telegram-noti", async (req, res) => {
     }
 })
 
-app.listen(3000, function(){
-    console.log("localhost:3000");
+app.listen(process.env.SERVER_PORT, function(){
+    console.log(`localhost:${process.env.SERVER_PORT}`);
 })
