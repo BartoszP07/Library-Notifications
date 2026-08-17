@@ -8,7 +8,7 @@ const free_spaces_percent_p = document.getElementById("free-spaces-percent");
 
 const update_time_p = document.getElementById("update-time-p");
 
-const waiting_minutes = 10;
+const waiting_minutes = 30;
 
 btn.addEventListener("click", async function(){
     await GetSpaces();
