@@ -18,9 +18,9 @@ btn.addEventListener("click", async function(){
 
 msg_btn.addEventListener("click", async function() {
     if (msg_inp.value.length < 1) { return; }
+    await SendTelegram(msg_inp.value);
     // Clear the input
     msg_inp.value = "";
-    await SendTelegram(msg_inp.value);
 })
 
 async function GetSpaces(){
