@@ -82,31 +82,38 @@ async function SendTelegramNotification(message){
 
 let current_timer_id = null;
 
-async function RunLibraryLoop() {
-    // Get spaces
+async function runLibraryLoop() {
     await GetLibrarySpaces();
     
-    // Send message
     if (library_data) { 
         let message = `There are currently ${library_data.total - library_data.free} / ${library_data.total} people using the library. Usage is ${library_data.usage}`;
         await SendTelegramNotification(message);
     }
 
-    current_timer_id = setTimeout(RunLibraryLoop, 60000 * waiting_minutes);
+    ScheduleNextRun();
+}
+
+function ScheduleNextRun() {
+    const interval_ms = waiting_minutes * 60 * 1000;
+    const now = Date.now();
+    const ms_until_next = interval_ms - (now % interval_ms);
+    current_timer_id = setTimeout(runLibraryLoop, ms_until_next);
+    
+    const next_time = new Date(Date.now() + ms_until_next);
+    console.log(`Next check scheduled for: ${next_time.toLocaleTimeString()}`);
 }
 
 function UpdateWaitTime(newMinutes) {
     waiting_minutes = newMinutes;
-    console.log(`Time changed! Resetting timer to ${newMinutes} minutes.`);
+    console.log(`Frequency changed! Syncing clock to every ${newMinutes} minutes.`);
 
     if (current_timer_id) {
         clearTimeout(current_timer_id);
     }
-
-    RunLibraryLoop(); 
+    ScheduleNextRun(); 
 }
 
-RunLibraryLoop();
+ScheduleNextRun();   
 
 app.listen(process.env.SERVER_PORT, async function(){
     console.log(`localhost:${process.env.SERVER_PORT}`);
