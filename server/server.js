@@ -170,14 +170,19 @@ async function runLibraryLoop() {
     const now = new Date();
 
     // Check the desired date
-    if (now.getHours() == 9 && now.getMinutes() == 0) {
+    // 0 - 23 so 9am is 8.
+    if (now.getHours() == 8 && now.getMinutes() == 0) {
         await sendDailyForecast();
     }
 
     
     if (library_data) { 
         let message = `There are currently ${library_data.total - library_data.free} / ${library_data.total} people using the library. Usage is ${library_data.usage}`;
-        await SendTelegramNotification(message);
+        // Dont send the message at the time of the forecast message
+        if (!(now.getHours() == 8 && now.getMinutes() == 0)) {
+            await SendTelegramNotification(message);    
+        }
+        
 
         // Save the library data
         await save_library_history(library_data.free, library_data.total);
