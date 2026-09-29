@@ -95,19 +95,18 @@ async function get_library_history(){
 app.post("/api/change-fetch-frequency", (req, res) => {
     const new_freq = req.body.frequency;
     UpdateWaitTime(new_freq);
-    res.status(200).json({message: "changed frequency"});
+    return res.status(200).json({message: "changed frequency"});
 })
 
 app.get("/api/get-fetch-frequency", (req, res) => {
-    res.status(200).json({freq_mins: waiting_minutes})
+    return res.status(200).json({freq_mins: waiting_minutes})
 })
 
 app.get("/api/get-spaces", async (req, res) => {
     if (library_data){
-        res.status(200).json({data: library_data});
-        return;
+        return res.status(200).json({data: library_data});
     }
-    res.status(500).json({error: "No data found!"})
+    return res.status(500).json({error: "No data found!"})
 })
 
 async function GetLibrarySpaces(){
@@ -126,9 +125,10 @@ app.post("/api/send-telegram-noti", async (req, res) => {
     const message = req.body.message;
     const response = await SendTelegramNotification(message);
     if (!response.ok) {
-        res.status(500).json({error: "Telegram API Error"});
+        console.error("Telegram Rejected Message:", response);
+        return res.status(500).json({error: "Telegram API Error"});
     }
-    res.status(200).json({message: "Sent notification"});
+    return res.status(200).json({message: "Sent notification"});
     
 })
 
@@ -148,16 +148,20 @@ async function SendTelegramNotification(message){
             })
         });
 
+	const data = await response.json();
+	
         if (!response.ok) {
-            console.error("Telegram API error");
+            console.error("Telegram API error", response);
+	    return { ok: false, error: data};
         }
 
         console.log("Sent notification");
-        return response;
+        return {ok: true, data: data};
         
     }
     catch (err){
         console.error(err);
+	return {ok: false, error: err.message};
     }
 }
 
