@@ -112,12 +112,29 @@ app.get("/api/get-spaces", async (req, res) => {
 async function GetLibrarySpaces(){
     const UNIVERSITY_API_URL = process.env.UNIVERSITY_API_URL;
     try{
-        const response = await fetch(UNIVERSITY_API_URL);
+        const apiOrigin = new URL(UNIVERSITY_API_URL).origin;
+        const response = await fetch(UNIVERSITY_API_URL, {
+            method: "GET",
+            headers: {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+                "Accept": "application/json, text/plain, */*",
+                "Accept-Language": "en-GB,en;q=0.9",
+                "Referer": `${apiOrigin}/`,
+                "Cache-Control": "no-cache"
+            },
+            signal: AbortSignal.timeout(10000)
+        });
+
+        if (!response.ok) {
+            console.error(`University API returned status ${response.status}: ${response.statusText}`);
+            return "NOT OK";
+        }
+
         library_data = await response.json();
         return "OK";
     }
     catch (err){
-        console.error(err);
+        console.error("Failed to fetch library spaces:", err.message || err);
         return "NOT OK";
     }
 }
@@ -126,10 +143,10 @@ app.post("/api/get-updated-spaces", async (req, res) => {
     const response = await GetLibrarySpaces();
     if (response == "OK"){
         console.log("got new data");
-        return res.status(200);
+        return res.status(200).json({message: "got new data"});
     }
     else{
-        return res.status(500);
+        return res.status(500).json({error: "Failed to fetch updated spaces"});
     }
 
 })
@@ -212,7 +229,9 @@ async function runLibraryLoop() {
 function ScheduleNextRun() {
     const interval_ms = waiting_minutes * 60 * 1000;
     const now = Date.now();
-    const ms_until_next = interval_ms - (now % interval_ms);
+    // Add 1-15 seconds of random jitter so requests don't fire on the exact millisecond mark
+    const jitter_ms = Math.floor(Math.random() * 14000) + 1000;
+    const ms_until_next = (interval_ms - (now % interval_ms)) + jitter_ms;
     current_timer_id = setTimeout(runLibraryLoop, ms_until_next);
     
     const next_time = new Date(Date.now() + ms_until_next);
