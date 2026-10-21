@@ -114,11 +114,25 @@ async function GetLibrarySpaces(){
     try{
         const response = await fetch(UNIVERSITY_API_URL);
         library_data = await response.json();
+        return "OK";
     }
     catch (err){
         console.error(err);
+        return "NOT OK";
     }
 }
+
+app.post("/api/get-updated-spaces", async (req, res) => {
+    const response = await GetLibrarySpaces();
+    if (response == "OK"){
+        console.log("got new data");
+        return res.status(200);
+    }
+    else{
+        return res.status(500);
+    }
+
+})
 
 app.post("/api/send-telegram-noti", async (req, res) => {
     console.log(req.body);
@@ -184,7 +198,7 @@ async function runLibraryLoop() {
         let message = `There are currently ${library_data.total - library_data.free} / ${library_data.total} people using the library. Usage is ${library_data.usage}`;
         // Dont send the message at the time of the forecast message
         if (!(now.getHours() == 8 && now.getMinutes() == 0) && (now.getHours() > 5 && now.getHours() <= 23)) {
-            await SendTelegramNotification(message);    
+            // await SendTelegramNotification(message);    
         }
         
 

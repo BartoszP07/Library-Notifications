@@ -62,7 +62,13 @@ decrease_freq.addEventListener("click", function() {
 })
 
 btn.addEventListener("click", async function(){
-    await GetSpaces();
+    const response = await fetch("/api/get-updated-spaces",
+        {
+            method: "POST"
+        }
+    );
+    console.log(response.ok);
+
 })
 
 msg_btn.addEventListener("click", async function() {
@@ -139,7 +145,7 @@ setInterval(async () => {
 
     
     
-}, 1000);
+}, 5000);
 
 // On window loaded
 window.addEventListener("load", async function() {
