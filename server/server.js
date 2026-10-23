@@ -214,8 +214,8 @@ async function runLibraryLoop() {
     if (library_data) { 
         let message = `There are currently ${library_data.total - library_data.free} / ${library_data.total} people using the library. Usage is ${library_data.usage}`;
         // Dont send the message at the time of the forecast message
-        if (!(now.getHours() == 8 && now.getMinutes() == 0) && (now.getHours() > 5 && now.getHours() <= 23)) {
-            // await SendTelegramNotification(message);    
+        if (now.getHours() > 5 && now.getHours() <= 23) {
+            await SendTelegramNotification(message);    
         }
         
 
