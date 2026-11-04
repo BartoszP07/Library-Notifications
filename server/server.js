@@ -15,6 +15,7 @@ let db;
 let waiting_minutes = 60;
 let quiet_start_hour = 0; // 12:00 AM (midnight)
 let quiet_end_hour = 6;   // 6:00 AM (active when hour >= 6 and <= 23)
+let telegram_target = "main"; // "main" | "debug"
 let usage_config = {
     lowMax: 600,
     highMin: 1100,
@@ -120,7 +121,11 @@ app.post("/api/change-fetch-frequency", (req, res) => {
         return res.status(400).json({error: "Invalid frequency"});
     }
     UpdateWaitTime(new_freq);
-    return res.status(200).json({message: "changed frequency", freq_mins: waiting_minutes});
+    return res.status(200).json({
+        message: "changed frequency",
+        freq_mins: waiting_minutes,
+        next_run_time: next_scheduled_time
+    });
 })
 
 app.post("/api/change-quiet-hours", (req, res) => {
@@ -166,12 +171,27 @@ app.post("/api/change-usage-settings", (req, res) => {
     });
 })
 
+app.post("/api/change-telegram-target", (req, res) => {
+    const target = req.body.target === "debug" ? "debug" : "main";
+    if (target === "debug" && !process.env.TELEGRAM_CHAT_ID_DEBUG) {
+        return res.status(400).json({error: "TELEGRAM_CHAT_ID_DEBUG is not set in .env"});
+    }
+    telegram_target = target;
+    console.log(`Telegram target switched to: ${telegram_target}`);
+    return res.status(200).json({
+        message: "changed telegram target",
+        telegram_target
+    });
+})
+
 app.get("/api/get-fetch-frequency", (req, res) => {
     return res.status(200).json({
         freq_mins: waiting_minutes,
+        next_run_time: next_scheduled_time,
         quiet_start_hour,
         quiet_end_hour,
-        usage_config
+        usage_config,
+        telegram_target
     })
 })
 
@@ -228,18 +248,27 @@ app.post("/api/get-updated-spaces", async (req, res) => {
 app.post("/api/send-telegram-noti", async (req, res) => {
     console.log(req.body);
     const message = req.body.message;
-    const response = await SendTelegramNotification(message);
+    const targetOverride = req.body.target;
+    const response = await SendTelegramNotification(message, targetOverride);
     if (!response.ok) {
         console.error("Telegram Rejected Message:", response);
-        return res.status(500).json({error: "Telegram API Error"});
+        return res.status(500).json({error: response.error || "Telegram API Error"});
     }
-    return res.status(200).json({message: "Sent notification"});
+    return res.status(200).json({message: "Sent notification", target: response.target});
     
 })
 
-async function SendTelegramNotification(message){
+async function SendTelegramNotification(message, targetOverride){
     const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-    const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+    const activeTarget = targetOverride ? (targetOverride === "debug" ? "debug" : "main") : telegram_target;
+    const CHAT_ID = activeTarget === "debug"
+        ? process.env.TELEGRAM_CHAT_ID_DEBUG
+        : process.env.TELEGRAM_CHAT_ID;
+
+    if (!CHAT_ID) {
+        console.error(`Missing chat ID for target: ${activeTarget}`);
+        return { ok: false, error: `Missing chat ID in .env for ${activeTarget} chat` };
+    }
 
     try{
         const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
@@ -260,8 +289,8 @@ async function SendTelegramNotification(message){
 	    return { ok: false, error: data};
         }
 
-        console.log("Sent notification");
-        return {ok: true, data: data};
+        console.log(`Sent notification (${activeTarget})`);
+        return {ok: true, data: data, target: activeTarget};
         
     }
     catch (err){
@@ -271,6 +300,7 @@ async function SendTelegramNotification(message){
 }
 
 let current_timer_id = null;
+let next_scheduled_time = null;
 
 async function runLibraryLoop() {
     await GetLibrarySpaces();
@@ -309,6 +339,7 @@ function ScheduleNextRun() {
     current_timer_id = setTimeout(runLibraryLoop, ms_until_next);
     
     const next_time = new Date(Date.now() + ms_until_next);
+    next_scheduled_time = next_time.toISOString();
     console.log(`Next check scheduled for: ${next_time.toLocaleTimeString()}`);
 }
 

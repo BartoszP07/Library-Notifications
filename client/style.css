@@ -151,6 +151,44 @@ button:disabled {
     color: var(--accent);
 }
 
+.chat-target-switcher {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+}
+
+.chat-target-label {
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-right: 0.15rem;
+}
+
+.target-btn {
+    background-color: var(--panel-inset);
+    color: var(--text-muted);
+    border: 1px solid var(--border-color);
+    padding: 0.28rem 0.65rem;
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    border-radius: 3px;
+}
+
+.target-btn:hover {
+    background-color: var(--panel-inset);
+    border-color: var(--accent);
+    color: white;
+}
+
+.target-btn.active {
+    background-color: var(--accent);
+    color: black;
+    border-color: var(--accent);
+}
+
 .meter-track {
     width: 100%;
     height: 14px;
@@ -259,10 +297,30 @@ button:disabled {
 .setting-label {
     display: flex;
     flex-direction: column;
-    gap: 0.2rem;
+    gap: 0.25rem;
     font-size: 0.9rem;
     letter-spacing: 0.05em;
     min-width: 0;
+}
+
+.setting-label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.next-run-badge {
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    background-color: var(--panel-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    padding: 0.15rem 0.45rem;
 }
 
 .setting-sub {

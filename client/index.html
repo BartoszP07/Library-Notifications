@@ -41,7 +41,11 @@
         <section class="dispatch-section">
             <div class="section-header">
                 <span>TELEGRAM DISPATCH</span>
-                <span>MANUAL OVERRIDE</span>
+                <div class="chat-target-switcher" role="group" aria-label="Telegram Chat Target">
+                    <span class="chat-target-label">TARGET:</span>
+                    <button type="button" class="target-btn active" id="target-main-btn" data-target="main">Main Chat</button>
+                    <button type="button" class="target-btn" id="target-debug-btn" data-target="debug">Debug Chat</button>
+                </div>
             </div>
             <div id="send-telegram-msg-div">
                 <input type="text" id="message-input" placeholder="Type notification message...">
@@ -58,7 +62,10 @@
             <div class="settings-grid">
                 <div class="setting-box">
                     <div class="setting-label">
-                        <span>UPDATE FREQUENCY</span>
+                        <div class="setting-label-row">
+                            <span>UPDATE FREQUENCY</span>
+                            <span class="next-run-badge" id="next-run-time-p">NEXT: --:--</span>
+                        </div>
                         <span class="setting-sub">MINUTES BETWEEN CHECKS</span>
                     </div>
                     <div class="setting-controls">

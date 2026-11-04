@@ -38,6 +38,7 @@ const increase_freq = document.getElementById("increase-frequency-btn");
 const decrease_freq = document.getElementById("decrease-frequency-btn");
 const freq_value_p = document.getElementById("frequency-value");
 const apply_freq_btn = document.getElementById("apply-frequency-btn");
+const next_run_time_p = document.getElementById("next-run-time-p");
 
 const quiet_start_select = document.getElementById("quiet-start-select");
 const quiet_end_select = document.getElementById("quiet-end-select");
@@ -52,6 +53,10 @@ const high_label_input = document.getElementById("high-label-input");
 const high_min_input = document.getElementById("high-min-input");
 const apply_usage_btn = document.getElementById("apply-usage-btn");
 
+const target_main_btn = document.getElementById("target-main-btn");
+const target_debug_btn = document.getElementById("target-debug-btn");
+
+let current_telegram_target = "main";
 let waiting_minutes;
 let current_waiting_minutes = 60;
 let settings_initialized = false;
@@ -98,6 +103,50 @@ function updateQuietSummaryDisplay(startHour, endHour) {
     }
 }
 
+function updateNextRunDisplay(isoString) {
+    if (!next_run_time_p || !isoString) return;
+    const date = new Date(isoString);
+    if (Number.isNaN(date.getTime())) return;
+    const timeStr = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    next_run_time_p.innerText = `NEXT: ${timeStr}`;
+}
+
+function setTelegramTargetUI(target) {
+    current_telegram_target = target === "debug" ? "debug" : "main";
+    if (target_main_btn && target_debug_btn) {
+        target_main_btn.classList.toggle("active", current_telegram_target === "main");
+        target_debug_btn.classList.toggle("active", current_telegram_target === "debug");
+    }
+}
+
+async function switchTelegramTarget(target) {
+    try {
+        const response = await fetch("/api/change-telegram-target", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({ target })
+        });
+        const data = await response.json();
+        if (response.ok) {
+            setTelegramTargetUI(data.telegram_target);
+            const label = data.telegram_target === "debug" ? "Debug Chat" : "Main Chat";
+            showToast("CHAT TARGET UPDATED", `Routing Telegram messages to ${label}.`);
+        } else {
+            showToast("TARGET ERROR", data.error || "Could not switch Telegram chat.", true);
+        }
+    } catch (err) {
+        console.error(err);
+        showToast("NETWORK ERROR", "Could not reach server to switch Telegram chat.", true);
+    }
+}
+
+if (target_main_btn) {
+    target_main_btn.addEventListener("click", () => switchTelegramTarget("main"));
+}
+if (target_debug_btn) {
+    target_debug_btn.addEventListener("click", () => switchTelegramTarget("debug"));
+}
+
 initQuietSelects();
 
 async function ApplyNewFrequency(){
@@ -112,6 +161,9 @@ async function ApplyNewFrequency(){
         if (response.ok) {
             waiting_minutes = current_waiting_minutes;
             update_time_p.innerHTML = `Updates Every <span style="color:gold;">${waiting_minutes}</span> Minutes`;
+            if (data.next_run_time) {
+                updateNextRunDisplay(data.next_run_time);
+            }
             showToast("FREQUENCY UPDATED", `Sync schedule set to every ${current_waiting_minutes} minutes.`);
         } else {
             showToast("UPDATE FAILED", data.error || "Could not update frequency.", true);
@@ -282,7 +334,6 @@ async function GetSpaces(){
         const response = await fetch("/api/get-spaces");
         const data = (await response.json()).data;
         library_data = data;
-        console.log(data);
 
         // Update variables
         // Check if the data is defined
@@ -325,15 +376,19 @@ async function SendTelegram(message){
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({"message": message})
+            body: JSON.stringify({
+                message: message,
+                target: current_telegram_target
+            })
         })
         const data = await response.json();
 
         console.log(data);
         if (response.ok) {
-            showToast("TELEGRAM SENT", "Notification dispatched to Telegram.");
+            const label = current_telegram_target === "debug" ? "Debug Chat" : "Main Chat";
+            showToast("TELEGRAM SENT", `Dispatched to ${label}.`);
         } else {
-            showToast("TELEGRAM ERROR", "Failed to send Telegram notification.", true);
+            showToast("TELEGRAM ERROR", data.error || "Failed to send Telegram notification.", true);
         }
     }
     catch (err){
@@ -347,6 +402,14 @@ async function refreshStatus() {
         const response = await fetch("/api/get-fetch-frequency");
         const data = await response.json();
         waiting_minutes = data.freq_mins;
+
+        if (data.next_run_time) {
+            updateNextRunDisplay(data.next_run_time);
+        }
+
+        if (data.telegram_target) {
+            setTelegramTargetUI(data.telegram_target);
+        }
 
         if (typeof data.quiet_start_hour === "number" && typeof data.quiet_end_hour === "number") {
             updateQuietSummaryDisplay(data.quiet_start_hour, data.quiet_end_hour);
