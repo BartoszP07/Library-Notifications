@@ -13,7 +13,39 @@ app.use(express.json());
 let db;
 
 let waiting_minutes = 60;
+let quiet_start_hour = 0; // 12:00 AM (midnight)
+let quiet_end_hour = 6;   // 6:00 AM (active when hour >= 6 and <= 23)
+let usage_config = {
+    lowMax: 600,
+    highMin: 1100,
+    lowLabel: "Low",
+    normalLabel: "Normal",
+    highLabel: "High"
+};
 let library_data;
+
+function applyCustomUsage() {
+    if (!library_data || typeof library_data.total !== "number" || typeof library_data.free !== "number") {
+        return;
+    }
+    const occupied = Math.max(0, library_data.total - library_data.free);
+    if (occupied < usage_config.lowMax) {
+        library_data.usage = usage_config.lowLabel;
+    } else if (occupied > usage_config.highMin) {
+        library_data.usage = usage_config.highLabel;
+    } else {
+        library_data.usage = usage_config.normalLabel;
+    }
+}
+
+function isQuietHour(hour) {
+    if (quiet_start_hour === quiet_end_hour) return false;
+    if (quiet_start_hour < quiet_end_hour) {
+        return hour >= quiet_start_hour && hour < quiet_end_hour;
+    }
+    // Overnight window (e.g., 23:00 to 06:00)
+    return hour >= quiet_start_hour || hour < quiet_end_hour;
+}
 
 async function init_database(){
     // open the db file
@@ -93,13 +125,64 @@ async function get_library_history(){
 }
 
 app.post("/api/change-fetch-frequency", (req, res) => {
-    const new_freq = req.body.frequency;
+    const new_freq = Number(req.body.frequency);
+    if (!Number.isFinite(new_freq) || new_freq < 1 || new_freq > 120) {
+        return res.status(400).json({error: "Invalid frequency"});
+    }
     UpdateWaitTime(new_freq);
-    return res.status(200).json({message: "changed frequency"});
+    return res.status(200).json({message: "changed frequency", freq_mins: waiting_minutes});
+})
+
+app.post("/api/change-quiet-hours", (req, res) => {
+    const start = Number(req.body.startHour);
+    const end = Number(req.body.endHour);
+    if (!Number.isInteger(start) || start < 0 || start > 23 || !Number.isInteger(end) || end < 0 || end > 23) {
+        return res.status(400).json({error: "Hours must be integers between 0 and 23"});
+    }
+    quiet_start_hour = start;
+    quiet_end_hour = end;
+    console.log(`Quiet hours updated: ${quiet_start_hour}:00 to ${quiet_end_hour}:00`);
+    return res.status(200).json({
+        message: "changed quiet hours",
+        quiet_start_hour,
+        quiet_end_hour
+    });
+})
+
+app.post("/api/change-usage-settings", (req, res) => {
+    const lowMax = Number(req.body.lowMax);
+    const highMin = Number(req.body.highMin);
+    const lowLabel = String(req.body.lowLabel ?? "Low").trim() || "Low";
+    const normalLabel = String(req.body.normalLabel ?? "Normal").trim() || "Normal";
+    const highLabel = String(req.body.highLabel ?? "High").trim() || "High";
+
+    if (!Number.isFinite(lowMax) || !Number.isFinite(highMin) || lowMax < 0 || highMin < lowMax) {
+        return res.status(400).json({error: "Invalid thresholds: High threshold must be >= Low threshold."});
+    }
+
+    usage_config = {
+        lowMax: Math.round(lowMax),
+        highMin: Math.round(highMin),
+        lowLabel,
+        normalLabel,
+        highLabel
+    };
+
+    applyCustomUsage();
+    console.log("Usage config updated:", usage_config);
+    return res.status(200).json({
+        message: "changed usage settings",
+        usage_config
+    });
 })
 
 app.get("/api/get-fetch-frequency", (req, res) => {
-    return res.status(200).json({freq_mins: waiting_minutes})
+    return res.status(200).json({
+        freq_mins: waiting_minutes,
+        quiet_start_hour,
+        quiet_end_hour,
+        usage_config
+    })
 })
 
 app.get("/api/get-spaces", async (req, res) => {
@@ -131,6 +214,7 @@ async function GetLibrarySpaces(){
         }
 
         library_data = await response.json();
+        applyCustomUsage();
         return "OK";
     }
     catch (err){
@@ -213,8 +297,8 @@ async function runLibraryLoop() {
     
     if (library_data) { 
         let message = `There are currently ${library_data.total - library_data.free} / ${library_data.total} people using the library. Usage is ${library_data.usage}`;
-        // Dont send the message at the time of the forecast message
-        if (now.getHours() > 5 && now.getHours() <= 23) {
+        // Dont send the message during quiet hours or at the time of the forecast message
+        if (!(now.getHours() == 8 && now.getMinutes() == 0) && !isQuietHour(now.getHours())) {
             await SendTelegramNotification(message);    
         }
         
@@ -259,8 +343,8 @@ async function sendDailyForecast() {
     }
 
     // Filter the data based on busyness thresholds
-    const peakHours = historyData.filter(row => row.averagePeople > 1100);
-    const quietHours = historyData.filter(row => row.averagePeople < 600);
+    const peakHours = historyData.filter(row => row.averagePeople > usage_config.highMin);
+    const quietHours = historyData.filter(row => row.averagePeople < usage_config.lowMax);
 
     // Group consecutive hours to prevent fragmented output (e.g., turns 2-3,3-4 into 2-5)
     const peakString = formatTimeBlocks(peakHours);

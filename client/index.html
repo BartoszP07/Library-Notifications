@@ -8,37 +8,136 @@
 </head>
 <body>
 
-    <div class="title-div">
-        <h1>Library Notifications</h1>
-    </div>
+    <main class="board">
+        <header class="board-header">
+            <div class="title-div">
+                <span class="board-tag">BILL BRYSON // TELEMETRY</span>
+                <h1>LIBRARY NOTIFICATIONS</h1>
+            </div>
+            <div id="library-api-div">
+                <p id="update-time-p">Updates Every <span style="color:gold;">Loading</span> Minutes</p>
+                <button id="press-btn">Get Library Data</button>
+            </div>
+        </header>
 
-    <div id="library-api-div">
-        <button id="press-btn">Get Library Data</button>
-        <p id="update-time-p">Updates Every Loading Minutes</p>
-    </div>
+        <section class="occupancy-section">
+            <div class="section-header">
+                <span>LIVE OCCUPANCY</span>
+                <span id="occupied-summary">-- / -- OCCUPIED</span>
+            </div>
 
-    <div id="send-telegram-msg-div">
-        <button id="send-message-btn">Send Message</button>
-        <input type="text" id="message-input">
-    </div>
+            <div class="meter-track" aria-hidden="true">
+                <div class="meter-fill" id="occupancy-meter-fill"></div>
+            </div>
 
-    <div id="library-data-div">
-        <p class="lib-info-txt" id="total-spaces">Total</p>
-        <p class="lib-info-txt" id="free-spaces">Free</p>
-        <p class="lib-info-txt" id="free-spaces-percent">Free%</p>
-    </div>
+            <div id="library-data-div">
+                <p class="lib-info-txt" id="free-spaces"><span style="color:gold;">--</span> Free Spaces</p>
+                <p class="lib-info-txt" id="free-spaces-percent"><span style="color:gold;">--%</span> Free</p>
+                <p class="lib-info-txt" id="total-spaces"><span style="color:gold;">--</span> Total Spaces</p>
+                <p class="lib-info-txt" id="usage-status"><span style="color:gold;">--</span> Usage Level</p>
+            </div>
+        </section>
 
-    <div class="title-div" style="display: none;">
-        <h3>Frequency (minutes)</h3>
-    </div>
-    <div id="update-frequency-div" style="display: none;">
-        <button class="change-value-button" id="increase-frequency-btn">-</button>
-        <p id="frequency-value">30</p>
-        <button class="change-value-button" id="decrease-frequency-btn">+</button>
-    </div>
-    <div class="title-div" style="display: none;">
-        <button id=apply-frequency-btn>Apply</button>
-    </div>
+        <section class="dispatch-section">
+            <div class="section-header">
+                <span>TELEGRAM DISPATCH</span>
+                <span>MANUAL OVERRIDE</span>
+            </div>
+            <div id="send-telegram-msg-div">
+                <input type="text" id="message-input" placeholder="Type notification message...">
+                <button id="send-message-btn">Send Message</button>
+            </div>
+        </section>
+
+        <section class="settings-section">
+            <div class="section-header">
+                <span>SCHEDULE &amp; QUIET HOURS</span>
+                <span id="quiet-status-summary">QUIET: 12 AM - 6 AM</span>
+            </div>
+
+            <div class="settings-grid">
+                <div class="setting-box">
+                    <div class="setting-label">
+                        <span>UPDATE FREQUENCY</span>
+                        <span class="setting-sub">MINUTES BETWEEN CHECKS</span>
+                    </div>
+                    <div class="setting-controls">
+                        <div id="update-frequency-div">
+                            <button class="change-value-button" id="increase-frequency-btn" title="Decrease minutes (-1)">-</button>
+                            <p id="frequency-value">60</p>
+                            <button class="change-value-button" id="decrease-frequency-btn" title="Increase minutes (+1)">+</button>
+                        </div>
+                        <button id="apply-frequency-btn">Apply</button>
+                    </div>
+                </div>
+
+                <div class="setting-box">
+                    <div class="setting-label">
+                        <span>QUIET TIME WINDOW</span>
+                        <span class="setting-sub">MUTE NOTIFICATIONS BETWEEN</span>
+                    </div>
+                    <div class="setting-controls">
+                        <div class="quiet-select-group">
+                            <select id="quiet-start-select" aria-label="Quiet time start hour"></select>
+                            <span class="quiet-to">TO</span>
+                            <select id="quiet-end-select" aria-label="Quiet time end hour"></select>
+                        </div>
+                        <button id="apply-quiet-btn">Apply</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="setting-box usage-setting-box">
+                <div class="setting-box-top">
+                    <div class="setting-label">
+                        <span>USAGE LABELS &amp; THRESHOLDS</span>
+                        <span class="setting-sub">PEOPLE IN LIBRARY CUTOFFS FOR LOW / NORMAL / HIGH</span>
+                    </div>
+                    <button id="apply-usage-btn">Apply Usage</button>
+                </div>
+
+                <div class="usage-tiers-grid">
+                    <div class="usage-tier-card">
+                        <span class="tier-tag">TIER 1 // LOW</span>
+                        <label class="tier-field">
+                            <span>LABEL</span>
+                            <input type="text" id="low-label-input" value="Low">
+                        </label>
+                        <label class="tier-field">
+                            <span>UNDER (PEOPLE)</span>
+                            <input type="number" id="low-max-input" min="0" max="5000" value="600">
+                        </label>
+                    </div>
+
+                    <div class="usage-tier-card">
+                        <span class="tier-tag">TIER 2 // NORMAL</span>
+                        <label class="tier-field">
+                            <span>LABEL</span>
+                            <input type="text" id="normal-label-input" value="Normal">
+                        </label>
+                        <div class="tier-field">
+                            <span>RANGE (PEOPLE)</span>
+                            <div class="tier-range-readout" id="normal-range-readout">600 – 1100</div>
+                        </div>
+                    </div>
+
+                    <div class="usage-tier-card">
+                        <span class="tier-tag">TIER 3 // HIGH</span>
+                        <label class="tier-field">
+                            <span>LABEL</span>
+                            <input type="text" id="high-label-input" value="High">
+                        </label>
+                        <label class="tier-field">
+                            <span>OVER (PEOPLE)</span>
+                            <input type="number" id="high-min-input" min="0" max="5000" value="1100">
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="toast-container" aria-live="polite"></div>
 
     <script src="script.js"></script>
 </body>
