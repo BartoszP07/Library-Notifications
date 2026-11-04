@@ -26,10 +26,13 @@ let usage_config = {
 let library_data;
 
 function applyCustomUsage() {
-    if (!library_data || typeof library_data.total !== "number" || typeof library_data.free !== "number") {
+    if (!library_data || library_data.total === undefined || library_data.free === undefined) {
         return;
     }
-    const occupied = Math.max(0, library_data.total - library_data.free);
+    if (library_data.raw_usage === undefined && library_data.usage !== undefined) {
+        library_data.raw_usage = library_data.usage;
+    }
+    const occupied = Math.max(0, Number(library_data.total) - Number(library_data.free));
     if (occupied < usage_config.lowMax) {
         library_data.usage = usage_config.lowLabel;
     } else if (occupied > usage_config.highMin) {
@@ -256,6 +259,37 @@ app.post("/api/send-telegram-noti", async (req, res) => {
     }
     return res.status(200).json({message: "Sent notification", target: response.target});
     
+})
+
+app.post("/api/send-telegram-data", async (req, res) => {
+    const targetOverride = req.body?.target;
+    if (!library_data) {
+        await GetLibrarySpaces();
+    }
+    if (!library_data) {
+        return res.status(500).json({error: "No library data available on server"});
+    }
+
+    const lines = Object.entries(library_data).map(([key, value]) => {
+        const formattedVal = typeof value === "object" && value !== null
+            ? JSON.stringify(value)
+            : String(value);
+        return `${key}: ${formattedVal}`;
+    });
+
+    const fullMessage =
+        `📊 Library API Server Data (${new Date().toLocaleTimeString()})\n` +
+        `────────────────────\n` +
+        lines.join("\n") +
+        `\n\nRaw JSON:\n` +
+        JSON.stringify(library_data, null, 2);
+
+    const response = await SendTelegramNotification(fullMessage, targetOverride);
+    if (!response.ok) {
+        console.error("Telegram Rejected Server Data Message:", response);
+        return res.status(500).json({error: response.error || "Telegram API Error"});
+    }
+    return res.status(200).json({message: "Sent full server data", target: response.target});
 })
 
 async function SendTelegramNotification(message, targetOverride){

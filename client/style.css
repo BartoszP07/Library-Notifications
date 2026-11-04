@@ -117,6 +117,17 @@ button:disabled {
     cursor: wait;
 }
 
+.btn-outline {
+    background-color: var(--panel-inset);
+    color: var(--accent);
+    border: 1px solid var(--accent);
+}
+
+.btn-outline:hover {
+    background-color: var(--accent);
+    color: black;
+}
+
 .occupancy-section,
 .dispatch-section,
 .settings-section {

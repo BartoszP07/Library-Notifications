@@ -1,6 +1,7 @@
 const btn = document.getElementById("press-btn");
 const msg_inp = document.getElementById("message-input");
 const msg_btn = document.getElementById("send-message-btn");
+const send_data_btn = document.getElementById("send-data-btn");
 
 const total_spaces_p = document.getElementById("total-spaces");
 const free_spaces_p = document.getElementById("free-spaces");
@@ -328,6 +329,39 @@ msg_inp.addEventListener("keydown", function(e) {
         handleSendTelegram();
     }
 });
+
+async function handleSendServerData() {
+    if (!send_data_btn) return;
+    const originalText = send_data_btn.innerText;
+    send_data_btn.disabled = true;
+    send_data_btn.innerText = "Sending...";
+    try {
+        const response = await fetch("/api/send-telegram-data", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ target: current_telegram_target })
+        });
+        const data = await response.json();
+        if (response.ok) {
+            const label = current_telegram_target === "debug" ? "Debug Chat" : "Main Chat";
+            showToast("SERVER DATA SENT", `Full library_data payload sent to ${label}.`);
+        } else {
+            showToast("TELEGRAM ERROR", data.error || "Failed to send server data.", true);
+        }
+    } catch (err) {
+        console.error(err);
+        showToast("NETWORK ERROR", "Could not reach server to send data.", true);
+    } finally {
+        send_data_btn.disabled = false;
+        send_data_btn.innerText = originalText;
+    }
+}
+
+if (send_data_btn) {
+    send_data_btn.addEventListener("click", handleSendServerData);
+}
 
 async function GetSpaces(){
     try{
