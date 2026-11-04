@@ -81,17 +81,6 @@ async function save_library_history(free, total){
             [day, hour, free, total]
         );
         console.log("Saved library data");
-
-        // Automatically delete any old entries ( > 4 weeks (28 days))
-        const result = await db.run(`
-            DELETE FROM occupancy
-            WHERE timestamp < datetime("now", "-28 days")
-        `);
-
-        // Log is any rows were deleted
-        if (result.changes > 0){
-            console.log(`Deleted ${result.changes} entries`);
-        }
     }
     catch (error){
         console.error("Failed to save to database, ", error);
@@ -106,13 +95,14 @@ async function get_library_history(){
 
     try{
 
-        // Query database
-        const result = db.all(`
+        // Query database (last 4 weeks / 28 days of data)
+        const result = await db.all(`
             SELECT 
                 hourOfDay,
                 ROUND(AVG(totalSpaces - freeSpaces)) as averagePeople
             FROM occupancy
             WHERE dayOfWeek = ?
+              AND timestamp >= datetime("now", "-28 days")
             GROUP BY hourOfDay
             ORDER BY hourOfDay ASC
         `, [day]);
