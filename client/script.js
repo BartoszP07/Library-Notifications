@@ -249,6 +249,7 @@ async function ApplyUsageSettings() {
         if (response.ok) {
             updateNormalRangeReadout();
             await GetSpaces();
+            window.dispatchEvent(new Event("forecast-settings-changed"));
             showToast(
                 "USAGE UPDATED",
                 `${lowLabel} (<${lowMax}) · ${normalLabel} (${lowMax}–${highMin}) · ${highLabel} (>${highMin})`

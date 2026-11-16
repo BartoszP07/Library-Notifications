@@ -369,3 +369,29 @@ h1 { font-size: clamp(32px,3.4vw,48px); text-transform: uppercase; letter-spacin
 .occ-card-title,.occ-card-pill,.occ-card-stats,.occ-card-unavailable,.wing-occ-name,.wing-occ-val { font-family: inherit; letter-spacing: 0; }
 .occ-card-title { font-size: 10px; }.occ-card-pill { font-size: 10px; border-radius: 999px; padding: 3px 8px; }.occ-card-stats { font-size: 10px; }.occ-card-track { height: 5px; border: 0; border-radius: 999px; }.occ-card-fill { border-radius: inherit; }
 .wing-occ-mini { padding: 10px; border-radius: 11px; background: #26311e; border-color: #3e4b33; }.wing-occ-mini:hover { background: #35442a; }.wing-occ-name { font-size: 10px; }.wing-occ-val { font-size: 9px; }
+
+/* Daily forecast */
+.forecast-section { background: var(--panel-bg); border-radius: var(--radius); padding: 24px; min-width: 0; }
+.forecast-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.forecast-date { color: #acb79f; font-size: 11px; }
+.forecast-intro h2 { font-size: 26px; margin-bottom: 5px; }
+.forecast-intro p,.forecast-status { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+.forecast-status { padding: 24px 0 10px; }
+.forecast-chart-heading { margin-top: 26px; display: flex; justify-content: space-between; gap: 10px; font-size: 10px; color: #a5b399; }
+.forecast-chart { list-style: none; display: grid; grid-template-columns: repeat(24,minmax(0,1fr)); gap: clamp(3px,1vw,16px); height: 190px; margin: 10px 0 32px; border-bottom: 1px solid #435038; background: repeating-linear-gradient(to top,transparent 0,transparent calc(25% - 1px),#30382a calc(25% - 1px),#30382a 25%); }
+.forecast-hour { position: relative; min-width: 0; display: flex; justify-content: center; align-items: flex-end; }
+.forecast-bar { width: 100%; max-width: 24px; height: var(--bar-height); border-radius: 999px; background: var(--accent); min-height: 4px; }
+.forecast-hour.tier-normal .forecast-bar { background: var(--orange); }.forecast-hour.tier-high .forecast-bar { background: #ef8274; }
+.forecast-hour.tier-unknown .forecast-bar { background: transparent; border: 1px dashed #7d8775; }
+.forecast-hour-label { position: absolute; top: calc(100% + 9px); font-size: 9px; color: #a4af9a; white-space: nowrap; }
+.forecast-tooltip { display: none; position: absolute; bottom: calc(var(--bar-height) + 10px); left: 50%; transform: translateX(-50%); background: #10160c; color: #e1edcf; border: 1px solid #60704c; border-radius: 10px; padding: 9px 12px; font-size: 10px; width: max-content; max-width: 200px; z-index: 3; pointer-events: none; }
+.forecast-hour:hover .forecast-tooltip,.forecast-hour:focus-visible .forecast-tooltip { display: block; }
+.forecast-hour:first-child .forecast-tooltip { left: 0; transform: none; }.forecast-hour:last-child .forecast-tooltip { left: auto; right: 0; transform: none; }
+.forecast-key { display: flex; gap: 18px; flex-wrap: wrap; font-size: 10px; color: #b3bda9; }
+.forecast-key > span { display: inline-flex; align-items: center; gap: 6px; }.forecast-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }.forecast-dot.normal { background: var(--orange); }.forecast-dot.high { background: #ef8274; }.forecast-dot.unknown { background: transparent; border: 1px solid #7d8775; }
+.forecast-windows { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; margin-top: 20px; }
+.forecast-window { padding: 16px 18px; border-radius: 16px; background: #28331e; border: 1px solid #455735; }.forecast-window.peak { background: #34291e; border-color: #5b442a; }
+.forecast-window-label { color: var(--accent); font-size: 10px; font-weight: 650; letter-spacing: .04em; }.forecast-window.peak .forecast-window-label { color: var(--orange); }
+.forecast-window p { font-size: 13px; line-height: 1.6; margin-top: 7px; color: #e4eadc; }
+.forecast-note { margin-top: 14px; color: #919e85; font-size: 10px; line-height: 1.6; }
+@media(max-width:600px) { .forecast-section { padding: 18px 14px; border-radius: 22px; }.forecast-chart { height: 150px; gap: 4px; }.forecast-actions { justify-content: space-between; width: 100%; }.forecast-windows { grid-template-columns: 1fr; }.forecast-window { padding: 14px; }.forecast-hour-label { font-size: 8px; }.forecast-tooltip { max-width: 125px; font-size: 9px; } }

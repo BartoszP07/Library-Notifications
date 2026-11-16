@@ -49,3 +49,7 @@ The desktop image does not demonstrate mobile behavior. The implemented mobile l
 ## Final view selection
 
 The dashboard offers only the whole-building 3D visualization and its selected-level cutaway. The alternative 2D plan and view toggle were removed at the user’s request.
+
+## Daily forecast panel
+
+A rounded panel below live occupancy shows 24 hourly bars, quiet study windows and peak periods using the existing 28-day same-weekday history. Missing hours stay unknown. The read-only `/api/forecast` endpoint uses the existing history and time-block helpers; Telegram dispatch and scheduling are unchanged. The frontend refreshes every 15 minutes, on demand and after usage threshold updates.

@@ -42,6 +42,25 @@
             </div>
         </section>
 
+        <section class="forecast-section" aria-labelledby="forecast-heading">
+            <div class="section-header">
+                <span id="forecast-heading">Today’s forecast</span>
+                <div class="forecast-actions"><span id="forecast-date" class="forecast-date">Today · UK time</span><button type="button" id="refresh-forecast-btn" class="map-control">Refresh forecast</button></div>
+            </div>
+            <div class="forecast-intro"><h2>Plan a quieter visit.</h2><p>Expected occupancy through the day, based on recent history for this weekday.</p></div>
+            <p id="forecast-status" class="forecast-status" role="status">Loading today’s forecast…</p>
+            <div id="forecast-content" hidden>
+                <div class="forecast-chart-heading"><span>Predicted people</span><span id="forecast-scale-label"></span></div>
+                <ol id="forecast-chart" class="forecast-chart" aria-label="Hourly occupancy forecast"></ol>
+                <div class="forecast-key"><span><i class="forecast-dot low"></i>Low</span><span><i class="forecast-dot normal"></i>Normal</span><span><i class="forecast-dot high"></i>High</span><span><i class="forecast-dot unknown"></i>No history</span></div>
+                <div class="forecast-windows">
+                    <div class="forecast-window quiet"><span class="forecast-window-label">Best study windows</span><p id="forecast-quiet"></p></div>
+                    <div class="forecast-window peak"><span class="forecast-window-label">Peak periods</span><p id="forecast-peak"></p></div>
+                </div>
+                <p id="forecast-note" class="forecast-note"></p>
+            </div>
+        </section>
+
         <section id="explore" class="floor-section" aria-labelledby="floor-heading">
             <div class="section-header">
                 <span id="floor-heading">Explore the library</span>
@@ -215,5 +234,6 @@
     <script src="building.js"></script>
     <script src="floorplan.js"></script>
     <script src="script.js"></script>
+    <script src="forecast.js"></script>
 </body>
 </html>

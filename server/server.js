@@ -335,6 +335,42 @@ app.get("/api/get-spaces", async (req, res) => {
     return res.status(500).json({error: "No data found!"})
 })
 
+// Read-only forecast for the dashboard; does not send or schedule notifications.
+app.get("/api/forecast", async (req, res) => {
+    if (!db) return res.status(503).json({ error: "History database is starting up. Try again shortly." });
+    try {
+        const history = await get_library_history();
+        const rows = (history || []).filter(row =>
+            Number.isInteger(Number(row.hourOfDay)) && Number(row.hourOfDay) >= 0 && Number(row.hourOfDay) < 24 &&
+            row.averagePeople !== null && Number.isFinite(Number(row.averagePeople)) && Number(row.averagePeople) >= 0
+        );
+        const byHour = new Map(rows.map(row => [Number(row.hourOfDay), Number(row.averagePeople)]));
+        const peakHours = rows.filter(row => Number(row.averagePeople) > usage_config.highMin);
+        const quietHours = rows.filter(row => Number(row.averagePeople) < usage_config.lowMax);
+        const now = new Date();
+        res.set("Cache-Control", "no-store");
+        return res.json({ data: {
+            date: new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London" }).format(now),
+            timeZone: "Europe/London",
+            generatedAt: now.toISOString(),
+            lookbackDays: 28,
+            availableHours: byHour.size,
+            capacity: library_data?.total || null,
+            thresholds: { lowMax: usage_config.lowMax, highMin: usage_config.highMin },
+            quietWindows: formatTimeBlocks(quietHours),
+            peakWindows: formatTimeBlocks(peakHours),
+            hours: Array.from({ length: 24 }, (_, hour) => {
+                const averagePeople = byHour.get(hour) ?? null;
+                const tier = averagePeople === null ? "unknown" : averagePeople < usage_config.lowMax ? "low" : averagePeople > usage_config.highMin ? "high" : "normal";
+                return { hour, averagePeople, tier };
+            })
+        } });
+    } catch (error) {
+        console.error("Dashboard forecast failed:", error);
+        return res.status(500).json({ error: "Could not load the library forecast." });
+    }
+});
+
 async function GetLibrarySpaces(){
     const UNIVERSITY_API_URL = process.env.UNIVERSITY_API_URL;
     try{
