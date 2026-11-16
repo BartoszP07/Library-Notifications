@@ -3,26 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Library Notifications</title>
+    <title>Bill Bryson · Library dashboard</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <main class="board">
-        <header class="board-header">
+    <main class="board" id="dashboard">
+        <div class="app-topbar">
+            <div class="app-brand"><span>Bill Bryson<small>Library dashboard</small></span></div>
+            <span class="workspace-badge"><span class="workspace-dot" aria-hidden="true"></span>Durham University</span>
+        </div>
+        <header class="board-header" id="overview">
             <div class="title-div">
-                <span class="board-tag">BILL BRYSON // TELEMETRY</span>
-                <h1>LIBRARY NOTIFICATIONS</h1>
+                <span class="board-tag">YOUR LIBRARY, AT A GLANCE</span>
+                <h1>Library overview<span class="heading-dot">.</span></h1><p class="page-subtitle">Find a space. Explore a floor. Stay in the loop.</p>
             </div>
             <div id="library-api-div">
-                <p id="update-time-p">Updates Every <span style="color:gold;">Loading</span> Minutes</p>
-                <button id="press-btn">Get Library Data</button>
+                <p id="update-time-p">Updates Every <span class="metric-value">Loading</span> Minutes</p>
+                <button id="press-btn">Refresh data</button>
             </div>
         </header>
 
         <section class="occupancy-section">
             <div class="section-header">
-                <span>LIVE OCCUPANCY</span>
+                <span>Live occupancy</span>
                 <span id="occupied-summary">-- / -- OCCUPIED</span>
             </div>
 
@@ -31,32 +35,92 @@
             </div>
 
             <div id="library-data-div">
-                <p class="lib-info-txt" id="free-spaces"><span style="color:gold;">--</span> Free Spaces</p>
-                <p class="lib-info-txt" id="free-spaces-percent"><span style="color:gold;">--%</span> Free</p>
-                <p class="lib-info-txt" id="total-spaces"><span style="color:gold;">--</span> Total Spaces</p>
-                <p class="lib-info-txt" id="usage-status"><span style="color:gold;">--</span> Usage Level</p>
+                <p class="lib-info-txt" id="free-spaces"><span class="metric-value">--</span> Free Spaces</p>
+                <p class="lib-info-txt" id="free-spaces-percent"><span class="metric-value">--%</span> Free</p>
+                <p class="lib-info-txt" id="total-spaces"><span class="metric-value">--</span> Total Spaces</p>
+                <p class="lib-info-txt" id="usage-status" data-usage-tier="unknown"><span class="metric-value">--</span> Usage Level</p>
             </div>
         </section>
 
-        <section class="dispatch-section">
+        <section id="explore" class="floor-section" aria-labelledby="floor-heading">
             <div class="section-header">
-                <span>TELEGRAM DISPATCH</span>
+                <span id="floor-heading">Explore the library</span>
+                <span class="floor-caption">INTERACTIVE FLOOR GUIDE</span>
+            </div>
+            <div class="floor-intro">
+                <div><h2>A space for every study session.</h2><p>Explore the building and select a level to find your next study spot.</p></div>
+                <span class="floor-north" aria-hidden="true">↑ N</span>
+            </div>
+            <div class="map-toolbar">
+                <button type="button" id="reset-map" class="map-control">Reset view</button>
+            </div>
+            <div class="floor-layout">
+                <div class="floor-map-wrap">
+                    <div class="floor-picker-heading"><label for="floor-select">CHOOSE LEVEL</label><select id="floor-select" aria-label="Library level"><option value="1">Level 1</option><option value="2" selected>Level 2 · Entrance</option><option value="3">Level 3</option><option value="4">Level 4</option></select></div>
+            <div class="floor-tabs" role="group" aria-label="Choose a library floor">
+                <button type="button" class="floor-tab" data-floor="1" aria-pressed="false">Level 1</button>
+                <button type="button" class="floor-tab active" data-floor="2" aria-pressed="true">Level 2 <span>Entrance</span></button>
+                <button type="button" class="floor-tab" data-floor="3" aria-pressed="false">Level 3</button>
+                <button type="button" class="floor-tab" data-floor="4" aria-pressed="false">Level 4</button>
+            </div>
+                    <p id="current-floor-label" class="current-floor-label">Viewing Level 2 · Entrance</p>
+                    <div id="library-3d">
+                        <p id="building-description">Explore the whole building, or cut away to your selected level.</p>
+                        <label id="cutaway-control" class="cutaway-control"><input type="checkbox" id="building-cutaway"> Cut away to selected level</label>
+                        <svg id="building-map" viewBox="0 0 620 520" role="group" aria-label="Library floor model. Select a wing. Use the controls below to rotate and zoom."></svg>
+                        <div class="model-controls">
+                            <label>Rotate <input id="map-rotation" type="range" min="-180" max="180" value="-25" aria-label="Rotate building"></label>
+                            <label>Tilt <input id="map-tilt" type="range" min="25" max="75" value="55" aria-label="Tilt building"></label>
+                            <label>Zoom <input id="map-zoom" type="range" min="75" max="150" value="100" aria-label="Zoom building"></label>
+                        </div>
+                        <p class="model-hint">Drag to rotate · Select a level, then a wing</p>
+                    </div>
+                    <div class="occupancy-legend" id="occupancy-legend" aria-label="Occupancy colour key">
+                        <div class="legend-scale">
+                            <div class="legend-gradient-bar" aria-hidden="true"></div>
+                            <div class="legend-scale-labels">
+                                <span>0% · <span id="legend-low-label">Low</span></span>
+                                <span id="legend-normal-label">Normal</span>
+                                <span><span id="legend-high-label">High</span> · 100%</span>
+                            </div>
+                        </div>
+                        <span class="legend-item"><span class="legend-swatch swatch-unavailable"></span>Unavailable / Staff</span>
+                    </div>
+                    <div class="map-note">SCHEMATIC · NOT TO SCALE <span id="map-view-label">3D / BUILDING</span></div>
+                </div>
+                <div class="floor-details" aria-live="polite">
+                    <span class="details-eyebrow" id="floor-detail-kicker">LEVEL 2 // OVERVIEW</span>
+                    <h3 id="floor-detail-title">The entrance floor</h3>
+                    <p id="floor-detail-description"></p>
+                    <div id="floor-occupancy-card" class="floor-occupancy-card" hidden></div>
+                    <div class="detail-rule"></div>
+                    <span class="details-label" id="floor-list-label">ON THIS FLOOR</span>
+                    <ul id="floor-detail-list"></ul>
+                    <p class="detail-hint">Select a wing on the map to explore it.</p>
+                </div>
+            </div>
+            <p class="floor-disclaimer">Based on the university floor plan, updated October 2025. Exterior, heights and landscaping are illustrative. Floor and wing colours reflect live section occupancy.</p>
+        </section>
+
+        <section id="notifications" class="dispatch-section">
+            <div class="section-header">
+                <span>Telegram notifications</span>
                 <div class="chat-target-switcher" role="group" aria-label="Telegram Chat Target">
-                    <span class="chat-target-label">TARGET:</span>
+                    <span class="chat-target-label">Send to</span>
                     <button type="button" class="target-btn active" id="target-main-btn" data-target="main">Main Chat</button>
                     <button type="button" class="target-btn" id="target-debug-btn" data-target="debug">Debug Chat</button>
                 </div>
             </div>
             <div id="send-telegram-msg-div">
-                <input type="text" id="message-input" placeholder="Type notification message...">
+                <input type="text" id="message-input" placeholder="Write a message to your Telegram chat…">
                 <button id="send-message-btn">Send Message</button>
-                <button id="send-data-btn" class="btn-outline" title="Send all library_data fields from the server to the selected Telegram chat">Send Server Data</button>
+                <button id="send-data-btn" class="btn-outline" title="Send all library_data fields from the server to the selected Telegram chat">Send occupancy</button>
             </div>
         </section>
 
-        <section class="settings-section">
+        <section id="settings" class="settings-section">
             <div class="section-header">
-                <span>SCHEDULE &amp; QUIET HOURS</span>
+                <span>Make it work for you</span>
                 <span id="quiet-status-summary">QUIET: 12 AM - 6 AM</span>
             </div>
 
@@ -143,10 +207,13 @@
                 </div>
             </div>
         </section>
+        <footer class="dashboard-footer"><span>Bill Bryson Library <span aria-hidden="true">/</span> Durham University</span></footer>
     </main>
 
     <div id="toast-container" aria-live="polite"></div>
 
+    <script src="building.js"></script>
+    <script src="floorplan.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

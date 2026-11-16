@@ -25,20 +25,150 @@ let usage_config = {
 };
 let library_data;
 
+function formatOccupancyMetrics(freeVal, totalVal, rawUsageFallback) {
+    const free = Math.max(0, Number(freeVal) || 0);
+    const total = Math.max(0, Number(totalVal) || 0);
+    const freePercentage = total > 0 ? Number(((free / total) * 100).toFixed(1)) : 0;
+    const usedPercentage = total > 0 ? Number((((total - free) / total) * 100).toFixed(1)) : 0;
+    const raw_usage = rawUsageFallback ?? (
+        total === 0
+            ? "low"
+            : free === 0
+                ? "full"
+                : freePercentage <= 25
+                    ? "high"
+                    : freePercentage <= 50
+                        ? "normal"
+                        : "low"
+    );
+    const usage_tier = total === 0
+        ? "unavailable"
+        : (free === 0 || freePercentage <= 25)
+            ? "high"
+            : freePercentage <= 50
+                ? "normal"
+                : "low";
+    return {
+        free,
+        total,
+        freePercentage,
+        usedPercentage,
+        usage: raw_usage,
+        raw_usage,
+        usage_tier
+    };
+}
+
+function normalizeLibraryData(rawData) {
+    const occupancyRoot = rawData?.occupancy ?? rawData;
+    const telepen = occupancyRoot?.telepen ?? rawData;
+    const influxdb = occupancyRoot?.influxdb ?? null;
+
+    const formatted = {
+        free: Number(telepen.free),
+        total: Number(telepen.total),
+        freePercentage: Number(telepen.freePercentage),
+        usedPercentage: Number(telepen.usedPercentage),
+        usage: telepen.usage,
+        raw_usage: telepen.usage
+    };
+
+    if (influxdb && typeof influxdb === "object") {
+        const levels = {};
+        const dirMap = { n: "north", e: "east", s: "south", w: "west" };
+        for (let lvl = 1; lvl <= 4; lvl++) {
+            let levelFree = 0;
+            let levelTotal = 0;
+            let hasLevelData = false;
+            const sections = {};
+            for (const [dir, sectionName] of Object.entries(dirMap)) {
+                const sector = influxdb[`Level${lvl}${dir}`];
+                if (sector && typeof sector === "object") {
+                    hasLevelData = true;
+                    const secFree = Number(sector.free) || 0;
+                    const secTotal = Number(sector.total ?? sector.capacity) || 0;
+                    levelFree += secFree;
+                    levelTotal += secTotal;
+                    sections[sectionName] = {
+                        label: sector.label ?? sectionName,
+                        available: sector.available !== false,
+                        ...formatOccupancyMetrics(secFree, secTotal, sector.usage)
+                    };
+                }
+            }
+            if (hasLevelData) {
+                levels[`level${lvl}`] = {
+                    ...formatOccupancyMetrics(levelFree, levelTotal),
+                    sections
+                };
+            }
+        }
+        if (Object.keys(levels).length > 0) {
+            formatted.levels = levels;
+        }
+    }
+
+    return formatted;
+}
+
+function applyUsageTier(entry, metricValue, lowThreshold, highThreshold) {
+    if (!entry || entry.total === undefined || entry.free === undefined) {
+        return;
+    }
+    if (entry.raw_usage === undefined && entry.usage !== undefined) {
+        entry.raw_usage = entry.usage;
+    }
+    if (metricValue < lowThreshold) {
+        entry.usage = usage_config.lowLabel;
+        entry.usage_tier = "low";
+    } else if (metricValue > highThreshold) {
+        entry.usage = usage_config.highLabel;
+        entry.usage_tier = "high";
+    } else {
+        entry.usage = usage_config.normalLabel;
+        entry.usage_tier = "normal";
+    }
+}
+
+function applyProportionalUsage(entry, lowRatio, highRatio) {
+    if (!entry || entry.total === undefined || entry.free === undefined) {
+        return;
+    }
+    const total = Number(entry.total);
+    if (entry.available === false || total === 0) {
+        if (entry.raw_usage === undefined) {
+            entry.raw_usage = entry.usage ?? "low";
+        }
+        entry.usage = "Unavailable";
+        entry.usage_tier = "unavailable";
+        return;
+    }
+    const occupied = Math.max(0, total - Number(entry.free));
+    applyUsageTier(entry, occupied / total, lowRatio, highRatio);
+}
+
 function applyCustomUsage() {
     if (!library_data || library_data.total === undefined || library_data.free === undefined) {
         return;
     }
-    if (library_data.raw_usage === undefined && library_data.usage !== undefined) {
-        library_data.raw_usage = library_data.usage;
-    }
-    const occupied = Math.max(0, Number(library_data.total) - Number(library_data.free));
-    if (occupied < usage_config.lowMax) {
-        library_data.usage = usage_config.lowLabel;
-    } else if (occupied > usage_config.highMin) {
-        library_data.usage = usage_config.highLabel;
-    } else {
-        library_data.usage = usage_config.normalLabel;
+    const totalCapacity = Number(library_data.total);
+    const occupied = Math.max(0, totalCapacity - Number(library_data.free));
+    applyUsageTier(library_data, occupied, usage_config.lowMax, usage_config.highMin);
+
+    if (library_data.levels && typeof library_data.levels === "object" && totalCapacity > 0) {
+        const lowRatio = usage_config.lowMax / totalCapacity;
+        const highRatio = usage_config.highMin / totalCapacity;
+        for (const levelData of Object.values(library_data.levels)) {
+            if (!levelData || levelData.total === undefined || levelData.free === undefined) {
+                continue;
+            }
+            applyProportionalUsage(levelData, lowRatio, highRatio);
+            if (levelData.sections && typeof levelData.sections === "object") {
+                for (const sectionData of Object.values(levelData.sections)) {
+                    applyProportionalUsage(sectionData, lowRatio, highRatio);
+                }
+            }
+        }
     }
 }
 
@@ -226,7 +356,8 @@ async function GetLibrarySpaces(){
             return "NOT OK";
         }
 
-        library_data = await response.json();
+        const rawData = await response.json();
+        library_data = normalizeLibraryData(rawData);
         applyCustomUsage();
         return "OK";
     }
@@ -261,6 +392,64 @@ app.post("/api/send-telegram-noti", async (req, res) => {
     
 })
 
+function isLeafObject(value) {
+    return (
+        typeof value === "object" &&
+        value !== null &&
+        !Array.isArray(value) &&
+        Object.values(value).every((v) => v === null || typeof v !== "object")
+    );
+}
+
+function formatCompactJson(value, indent = 0) {
+    if (value === null || typeof value !== "object" || isLeafObject(value)) {
+        return JSON.stringify(value);
+    }
+    const pad = " ".repeat(indent);
+    const childPad = " ".repeat(indent + 2);
+    if (Array.isArray(value)) {
+        if (value.length === 0) return "[]";
+        const items = value.map((item) => `${childPad}${formatCompactJson(item, indent + 2)}`);
+        return `[\n${items.join(",\n")}\n${pad}]`;
+    }
+    const entries = Object.entries(value);
+    if (entries.length === 0) return "{}";
+    const props = entries.map(([k, v]) => `${childPad}${JSON.stringify(k)}: ${formatCompactJson(v, indent + 2)}`);
+    return `{\n${props.join(",\n")}\n${pad}}`;
+}
+
+function formatTelegramDataMessage(data) {
+    const lines = Object.entries(data).flatMap(([key, value]) => {
+        if (key === "levels" && typeof value === "object" && value !== null) {
+            return Object.entries(value).flatMap(([levelKey, levelData]) => {
+                const occupied = Math.max(0, Number(levelData.total) - Number(levelData.free));
+                const levelLine = `${levelKey}: ${levelData.free}/${levelData.total} free (${occupied} occupied, ${levelData.usedPercentage}% used, usage: ${levelData.usage})`;
+                const activeSections = Object.entries(levelData.sections || {})
+                    .filter(([, sec]) => sec.available !== false && Number(sec.total) > 0)
+                    .map(([, sec]) => `${sec.label} ${sec.free}/${sec.total} (${sec.usedPercentage}%)`);
+                return activeSections.length > 0
+                    ? [levelLine, `  ${activeSections.join(" | ")}`]
+                    : [levelLine];
+            });
+        }
+        const formattedVal = typeof value === "object" && value !== null
+            ? JSON.stringify(value)
+            : String(value);
+        return `${key}: ${formattedVal}`;
+    });
+
+    const header =
+        `📊 Library API Server Data (${new Date().toLocaleTimeString()})\n` +
+        `────────────────────\n` +
+        lines.join("\n") +
+        `\n\nRaw JSON:\n`;
+
+    const compactRaw = formatCompactJson(data);
+    return header.length + compactRaw.length <= 4096
+        ? header + compactRaw
+        : header + JSON.stringify(data);
+}
+
 app.post("/api/send-telegram-data", async (req, res) => {
     const targetOverride = req.body?.target;
     if (!library_data) {
@@ -270,19 +459,7 @@ app.post("/api/send-telegram-data", async (req, res) => {
         return res.status(500).json({error: "No library data available on server"});
     }
 
-    const lines = Object.entries(library_data).map(([key, value]) => {
-        const formattedVal = typeof value === "object" && value !== null
-            ? JSON.stringify(value)
-            : String(value);
-        return `${key}: ${formattedVal}`;
-    });
-
-    const fullMessage =
-        `📊 Library API Server Data (${new Date().toLocaleTimeString()})\n` +
-        `────────────────────\n` +
-        lines.join("\n") +
-        `\n\nRaw JSON:\n` +
-        JSON.stringify(library_data, null, 2);
+    const fullMessage = formatTelegramDataMessage(library_data);
 
     const response = await SendTelegramNotification(fullMessage, targetOverride);
     if (!response.ok) {

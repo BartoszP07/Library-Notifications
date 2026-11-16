@@ -161,7 +161,7 @@ async function ApplyNewFrequency(){
         console.log(data);
         if (response.ok) {
             waiting_minutes = current_waiting_minutes;
-            update_time_p.innerHTML = `Updates Every <span style="color:gold;">${waiting_minutes}</span> Minutes`;
+            update_time_p.innerHTML = `Updates Every <span class="metric-value">${waiting_minutes}</span> Minutes`;
             if (data.next_run_time) {
                 updateNextRunDisplay(data.next_run_time);
             }
@@ -368,15 +368,21 @@ async function GetSpaces(){
         const response = await fetch("/api/get-spaces");
         const data = (await response.json()).data;
         library_data = data;
+        if (usage_status_p) {
+            // Use the server tier so custom labels and thresholds keep the right colour.
+            const tier = data?.usage_tier === "medium" ? "normal" : data?.usage_tier;
+            usage_status_p.dataset.usageTier = ["low", "normal", "high"].includes(tier) ? tier : "unknown";
+        }
+        console.log(library_data);
 
         // Update variables
         // Check if the data is defined
         if (data){
-            total_spaces_p.innerHTML = `<span style="color:gold;">${data.total}</span> Total Spaces`;
-            free_spaces_p.innerHTML = `<span style="color:gold;">${data.free}</span> Free Spaces`;
-            free_spaces_percent_p.innerHTML = `<span style="color:gold;">${data.freePercentage}%</span> Free`;
+            total_spaces_p.innerHTML = `<span class="metric-value">${data.total}</span> Total Spaces`;
+            free_spaces_p.innerHTML = `<span class="metric-value">${data.free}</span> Free Spaces`;
+            free_spaces_percent_p.innerHTML = `<span class="metric-value">${data.freePercentage}%</span> Free`;
             if (usage_status_p) {
-                usage_status_p.innerHTML = `<span style="color:gold;">${data.usage ?? "--"}</span> Usage Level`;
+                usage_status_p.innerHTML = `<span class="metric-value">${data.usage ?? "--"}</span> Usage Level`;
             }
 
             const occupied = Math.max(0, data.total - data.free);
@@ -389,12 +395,16 @@ async function GetSpaces(){
             }
         }
         else{
-            total_spaces_p.innerHTML = `<span style="color:gold;">Loading</span> Total Spaces`;
-            free_spaces_p.innerHTML = `<span style="color:gold;">Loading</span> Free Spaces`;
-            free_spaces_percent_p.innerHTML = `<span style="color:gold;">Loading</span> Free`;
+            total_spaces_p.innerHTML = `<span class="metric-value">Loading</span> Total Spaces`;
+            free_spaces_p.innerHTML = `<span class="metric-value">Loading</span> Free Spaces`;
+            free_spaces_percent_p.innerHTML = `<span class="metric-value">Loading</span> Free`;
             if (usage_status_p) {
-                usage_status_p.innerHTML = `<span style="color:gold;">Loading</span> Usage Level`;
+                usage_status_p.innerHTML = `<span class="metric-value">Loading</span> Usage Level`;
             }
+        }
+
+        if (typeof renderFloor === "function") {
+            renderFloor();
         }
         
     }
@@ -476,10 +486,10 @@ async function refreshStatus() {
     }
 
     if (waiting_minutes){
-        update_time_p.innerHTML = `Updates Every <span style="color:gold;">${waiting_minutes}</span> Minutes`;
+        update_time_p.innerHTML = `Updates Every <span class="metric-value">${waiting_minutes}</span> Minutes`;
     }
     else{
-        update_time_p.innerHTML = `<span style="color:gold;">Loading</span>`;
+        update_time_p.innerHTML = `<span class="metric-value">Loading</span>`;
     }
 }
 
