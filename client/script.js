@@ -164,11 +164,11 @@ async function ApplyNewFrequency(){
         console.log(data);
         if (response.ok) {
             waiting_minutes = current_waiting_minutes;
-            update_time_p.innerHTML = `Updates Every <span class="metric-value">${waiting_minutes}</span> Minutes`;
+            update_time_p.innerHTML = `Site updates every minute &middot; Telegram every <span class="metric-value">${waiting_minutes}</span> minutes`;
             if (data.next_run_time) {
                 updateNextRunDisplay(data.next_run_time);
             }
-            showToast("FREQUENCY UPDATED", `Sync schedule set to every ${current_waiting_minutes} minutes.`);
+            showToast("FREQUENCY UPDATED", `Telegram updates set to every ${current_waiting_minutes} minutes.`);
         } else {
             showToast("UPDATE FAILED", data.error || "Could not update frequency.", true);
         }
@@ -390,7 +390,7 @@ async function GetSpaces(){
         // Check if the data is defined
         if (data){
             setMetric(total_spaces_p, data.total, "Total Spaces");
-            setMetric(free_spaces_p, data.free, "Free Spaces");
+            setMetric(free_spaces_p, data.free, "spaces free");
             setMetric(free_spaces_percent_p, `${data.freePercentage}%`, "Free");
             if (usage_status_p) setMetric(usage_status_p, data.usage ?? "--", "Usage Level");
 
@@ -405,7 +405,7 @@ async function GetSpaces(){
         }
         else{
             total_spaces_p.innerHTML = `<span class="metric-value">Loading</span> Total Spaces`;
-            free_spaces_p.innerHTML = `<span class="metric-value">Loading</span> Free Spaces`;
+            free_spaces_p.innerHTML = `<span class="metric-value">Loading</span> spaces free`;
             free_spaces_percent_p.innerHTML = `<span class="metric-value">Loading</span> Free`;
             if (usage_status_p) {
                 usage_status_p.innerHTML = `<span class="metric-value">Loading</span> Usage Level`;
@@ -495,7 +495,7 @@ async function refreshStatus() {
     }
 
     if (waiting_minutes){
-        update_time_p.innerHTML = `Updates Every <span class="metric-value">${waiting_minutes}</span> Minutes`;
+        update_time_p.innerHTML = `Site updates every minute &middot; Telegram every <span class="metric-value">${waiting_minutes}</span> minutes`;
     }
     else{
         update_time_p.innerHTML = `<span class="metric-value">Loading</span>`;

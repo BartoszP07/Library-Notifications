@@ -12,7 +12,7 @@ async function loadPublicSpaces() {
             metric.textContent = value;
             element.replaceChildren(metric, ` ${label}`);
         };
-        update('free-spaces', library_data.free, 'Free Spaces');
+        update('free-spaces', library_data.free, 'spaces free');
         update('free-spaces-percent', `${library_data.freePercentage}%`, 'Free');
         update('total-spaces', library_data.total, 'Total Spaces');
         update('usage-status', library_data.usage ?? '--', 'Usage Level');

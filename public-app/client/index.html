@@ -10,67 +10,66 @@
 
     <main class="board" id="dashboard">
         <div class="app-topbar">
-            <div class="app-brand"><span>Bill Bryson<small>Library dashboard</small></span></div>
+            <div class="app-brand"><div><h1>Bill Bryson Library</h1><small>Live study spaces</small></div></div>
             <span class="workspace-badge"><span class="workspace-dot" aria-hidden="true"></span>Durham University</span>
         </div>
-        <header class="board-header" id="overview">
-            <div class="title-div">
-                <span class="board-tag">YOUR LIBRARY, AT A GLANCE</span>
-                <h1>Library overview<span class="heading-dot">.</span></h1><p class="page-subtitle">Find a space. Explore a floor. Stay in the loop.</p>
-            </div>
-
-        </header>
+        <header class="board-header" id="overview"></header>
 
         <nav class="dashboard-tabs" aria-label="Dashboard sections" role="tablist">
             <button type="button" id="tab-overview" role="tab" aria-controls="panel-overview" aria-selected="true">Overview</button>
-            <button type="button" id="tab-forecast" role="tab" aria-controls="panel-forecast" aria-selected="false" tabindex="-1">Forecast</button>
             <button type="button" id="tab-explore" role="tab" aria-controls="panel-explore" aria-selected="false" tabindex="-1">Explore</button>
         </nav>
 
-        <section class="occupancy-section" id="panel-overview" role="tabpanel" aria-labelledby="tab-overview">
-            <div class="section-header">
-                <span>Live occupancy</span>
-                <span id="occupied-summary">-- / -- OCCUPIED</span>
-            </div>
-
-            <div class="meter-track" aria-hidden="true">
-                <div class="meter-fill" id="occupancy-meter-fill"></div>
-            </div>
-
-            <div id="library-data-div">
-                <p class="lib-info-txt" id="free-spaces"><span class="metric-value">--</span> Free Spaces</p>
-                <p class="lib-info-txt" id="free-spaces-percent"><span class="metric-value">--%</span> Free</p>
-                <p class="lib-info-txt" id="total-spaces"><span class="metric-value">--</span> Total Spaces</p>
-                <p class="lib-info-txt" id="usage-status" data-usage-tier="unknown"><span class="metric-value">--</span> Usage Level</p>
-            </div>
-        </section>
-
-        <section class="forecast-section" id="panel-forecast" role="tabpanel" aria-labelledby="tab-forecast">
-            <div class="section-header">
-                <span id="forecast-heading">Today’s forecast</span>
-                <div class="forecast-actions"><span id="forecast-date" class="forecast-date">Today · UK time</span></div>
-            </div>
-            <div class="forecast-intro"><h2>Plan a quieter visit.</h2><p>Expected occupancy through the day, based on recent history for this weekday.</p></div>
-            <p id="forecast-status" class="forecast-status" role="status">Loading today’s forecast…</p>
-            <div id="forecast-content" hidden>
-                <div class="forecast-chart-heading"><span>Predicted people</span><span id="forecast-scale-label"></span></div>
-                <ol id="forecast-chart" class="forecast-chart" aria-label="Hourly occupancy forecast"></ol>
-                <div class="forecast-key"><span><i class="forecast-dot low"></i>Low</span><span><i class="forecast-dot normal"></i>Normal</span><span><i class="forecast-dot high"></i>High</span><span><i class="forecast-dot unknown"></i>No history</span></div>
-                <div class="forecast-windows">
-                    <div class="forecast-window quiet"><span class="forecast-window-label">Best study windows</span><p id="forecast-quiet"></p></div>
-                    <div class="forecast-window peak"><span class="forecast-window-label">Peak periods</span><p id="forecast-peak"></p></div>
+        <div class="overview-panel" id="panel-overview" role="tabpanel" aria-labelledby="tab-overview">
+            <section class="occupancy-section" aria-labelledby="live-occupancy-heading">
+                <div class="section-header">
+                    <h2 id="live-occupancy-heading">Live occupancy</h2>
+                    <span id="occupied-summary">-- / -- OCCUPIED</span>
                 </div>
-                <p id="forecast-note" class="forecast-note"></p>
-            </div>
-        </section>
+
+                <div class="meter-track" aria-hidden="true">
+                    <div class="meter-fill" id="occupancy-meter-fill"></div>
+                </div>
+
+                <div id="library-data-div">
+                    <p class="lib-info-txt" id="free-spaces"><span class="metric-value">--</span> spaces free</p>
+                    <p class="lib-info-txt" id="free-spaces-percent"><span class="metric-value">--%</span> Free</p>
+                    <p class="lib-info-txt" id="total-spaces"><span class="metric-value">--</span> Total Spaces</p>
+                    <p class="lib-info-txt" id="usage-status" data-usage-tier="unknown"><span class="metric-value">--</span> Usage Level</p>
+                </div>
+            </section>
+
+            <aside class="telegram-updates" aria-label="Telegram updates">
+                <p>Get hourly library updates on Telegram.</p>
+                <a class="telegram-join" href="https://t.me/billyblib" target="_blank" rel="noopener noreferrer" aria-label="Join Telegram channel (opens in a new tab)">Join Telegram channel</a>
+            </aside>
+
+            <section class="forecast-section" id="panel-forecast" aria-labelledby="forecast-heading">
+                <div class="section-header">
+                    <h2 id="forecast-heading">Today’s forecast</h2>
+                    <div class="forecast-actions"><span id="forecast-date" class="forecast-date">Today · UK time</span></div>
+                </div>
+                <div class="forecast-intro"><p>Expected occupancy through the day, based on recent history for this weekday.</p></div>
+                <p id="forecast-status" class="forecast-status" role="status">Loading today’s forecast…</p>
+                <div id="forecast-content" hidden>
+                    <div class="forecast-chart-heading"><span>Predicted people</span><span id="forecast-scale-label"></span></div>
+                    <ol id="forecast-chart" class="forecast-chart" aria-label="Hourly occupancy forecast"></ol>
+                    <div class="forecast-key"><span><i class="forecast-dot low"></i>Low</span><span><i class="forecast-dot normal"></i>Normal</span><span><i class="forecast-dot high"></i>High</span><span><i class="forecast-dot unknown"></i>No history</span></div>
+                    <div class="forecast-windows">
+                        <div class="forecast-window quiet"><span class="forecast-window-label">Best study windows</span><p id="forecast-quiet"></p></div>
+                        <div class="forecast-window peak"><span class="forecast-window-label">Peak periods</span><p id="forecast-peak"></p></div>
+                    </div>
+                    <p id="forecast-note" class="forecast-note"></p>
+                </div>
+            </section>
+        </div>
 
         <section id="panel-explore" class="floor-section" role="tabpanel" aria-labelledby="tab-explore">
             <div class="section-header">
-                <span id="floor-heading">Explore the library</span>
-                <span class="floor-caption">INTERACTIVE FLOOR GUIDE</span>
+                <h2 id="floor-heading">Floor guide</h2>
             </div>
             <div class="floor-intro">
-                <div><h2>A space for every study session.</h2><p>Explore the building and select a level to find your next study spot.</p></div>
+                <div><p>Select a level, then a wing to see study spaces and occupancy.</p></div>
                 <span class="floor-north" aria-hidden="true">↑ N</span>
             </div>
             <div class="map-toolbar">
@@ -78,7 +77,7 @@
             </div>
             <div class="floor-layout">
                 <div class="floor-map-wrap">
-                    <div class="floor-picker-heading"><label for="floor-select">CHOOSE LEVEL</label><select id="floor-select" aria-label="Library level"><option value="1">Level 1</option><option value="2" selected>Level 2 · Entrance</option><option value="3">Level 3</option><option value="4">Level 4</option></select></div>
+                    <div class="floor-picker-heading"><label for="floor-select">Choose level</label><select id="floor-select" aria-label="Library level"><option value="1">Level 1</option><option value="2" selected>Level 2 · Entrance</option><option value="3">Level 3</option><option value="4">Level 4</option></select></div>
             <div class="floor-tabs" role="group" aria-label="Choose a library floor">
                 <button type="button" class="floor-tab" data-floor="1" aria-pressed="false">Level 1</button>
                 <button type="button" class="floor-tab active" data-floor="2" aria-pressed="true">Level 2 <span>Entrance</span></button>

@@ -5,6 +5,7 @@ const dotenv = require("dotenv").config();
 const sqlite3 = require("sqlite3");
 const { open } = require("sqlite");
 const { makePrivateGuard, isAuthenticationEnabled } = require("./private-guard");
+const { createOccupancyPoller, OCCUPANCY_REFRESH_MS } = require("./occupancy-poller");
 
 const app = express();
 
@@ -332,7 +333,11 @@ app.get("/api/get-fetch-frequency", (req, res) => {
 
 app.get("/api/get-spaces", async (req, res) => {
     if (library_data){
-        return res.status(200).json({data: library_data});
+        return res.status(200).json({
+            data: library_data,
+            updatedAt: occupancyPoller.getUpdatedAt(),
+            refreshIntervalSeconds: OCCUPANCY_REFRESH_MS / 1000
+        });
     }
     return res.status(500).json({error: "No data found!"})
 })
@@ -373,7 +378,7 @@ app.get("/api/forecast", async (req, res) => {
     }
 });
 
-async function GetLibrarySpaces(){
+async function fetchLibrarySpaces(){
     const UNIVERSITY_API_URL = process.env.UNIVERSITY_API_URL;
     try{
         const apiOrigin = new URL(UNIVERSITY_API_URL).origin;
@@ -403,6 +408,12 @@ async function GetLibrarySpaces(){
         console.error("Failed to fetch library spaces:", err.message || err);
         return "NOT OK";
     }
+}
+
+const occupancyPoller = createOccupancyPoller(fetchLibrarySpaces);
+
+function GetLibrarySpaces(options) {
+    return occupancyPoller.refresh(options);
 }
 
 app.post("/api/get-updated-spaces", async (req, res) => {
@@ -552,7 +563,8 @@ let current_timer_id = null;
 let next_scheduled_time = null;
 
 async function runLibraryLoop() {
-    await GetLibrarySpaces();
+    // Reuse the live cache without changing Telegram or history timing.
+    await GetLibrarySpaces({ maxAgeMs: OCCUPANCY_REFRESH_MS });
 
     // Get the current time
     const now = new Date();
@@ -685,7 +697,7 @@ if (tailnetAddress && !/^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.(?:\d{1,3})\.(?:
 }
 app.listen(process.env.SERVER_PORT || 3001, "127.0.0.1", async function(){
     console.log(`Private dashboard on 127.0.0.1:${process.env.SERVER_PORT}`);
-    await GetLibrarySpaces();
+    await occupancyPoller.start();
 });
 if (tailnetAddress) {
     app.listen(process.env.SERVER_PORT || 3001, tailnetAddress, () => {
