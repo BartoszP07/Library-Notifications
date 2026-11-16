@@ -27,6 +27,9 @@ const port = Number(process.env.PUBLIC_PORT || 3002);
 const privatePort = process.env.PRIVATE_PORT || process.env.SERVER_PORT || '3001';
 const upstream = 'http://127.0.0.1:' + privatePort;
 const cache = new Map();
+const pendingRefreshes = new Map();
+const lastRefreshAttempts = new Map();
+const occupancyCacheMs = 5000;
 const routes = ['/api/get-spaces', '/api/forecast'];
 
 app.disable('x-powered-by');
@@ -44,8 +47,18 @@ app.use((req, res, next) => {
     next();
 });
 
-async function refresh() {
-    await Promise.all(routes.map(async (route) => {
+function refreshRoute(route, maxAgeMs = 0) {
+    if (pendingRefreshes.has(route)) {
+        return pendingRefreshes.get(route);
+    }
+
+    const lastAttempt = lastRefreshAttempts.get(route);
+    if (maxAgeMs > 0 && lastAttempt !== undefined && Date.now() - lastAttempt < maxAgeMs) {
+        return Promise.resolve();
+    }
+
+    lastRefreshAttempts.set(route, Date.now());
+    const pending = (async () => {
         try {
             const response = await fetch(upstream + route, {
                 signal: AbortSignal.timeout(5000),
@@ -62,11 +75,23 @@ async function refresh() {
         } catch (error) {
             console.error(`Failed to refresh ${route}: ${error.message}`);
         }
-    }));
+    })().finally(() => {
+        pendingRefreshes.delete(route);
+    });
+    pendingRefreshes.set(route, pending);
+    return pending;
+}
+
+async function refresh() {
+    await Promise.all(routes.map(route => refreshRoute(route, occupancyCacheMs)));
 }
 
 for (const route of routes) {
-    app.get(route, (req, res) => {
+    app.get(route, async (req, res) => {
+        if (route === '/api/get-spaces') {
+            // Read the private backend's memory cache; never trigger a university fetch.
+            await refreshRoute(route, occupancyCacheMs);
+        }
         const entry = cache.get(route);
         const cacheExpired = entry && Date.now() - entry.updated > 30 * 60 * 1000;
 
@@ -74,7 +99,7 @@ for (const route of routes) {
             return res.status(503).json({ error: 'Data temporarily unavailable' });
         }
 
-        res.set('Cache-Control', 'public, max-age=30');
+        res.set('Cache-Control', 'no-store');
         res.json(entry.data);
     });
 }

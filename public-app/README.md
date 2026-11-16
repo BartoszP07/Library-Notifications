@@ -8,7 +8,7 @@ The private app always listens on `127.0.0.1:3001` (or SERVER_PORT). To also acc
 
 Run the public app alongside the private app with `node public-app/server.js`; it listens on port `3002` on available network interfaces by default, including the LAN and Tailscale interfaces. Set PUBLIC_PORT and PRIVATE_PORT if needed. Point the public Cloudflare Tunnel only at the public port. Use firewall rules if access from the LAN or other interfaces is unwanted. Verify existing tunnel routes, firewall rules and Tailscale policy before publishing.
 
-The public process only reads the existing occupancy and forecast endpoints on a fixed schedule and never opens the database or sends Telegram messages. Responses expire after 30 minutes without a successful refresh. Configure Cloudflare rate limiting and monitor traffic before opening to the public.
+The public process only reads the existing occupancy and forecast endpoints and never opens the database or sends Telegram messages. Responses expire after 30 minutes without a successful refresh. Configure Cloudflare rate limiting and monitor traffic before opening to the public.
 
 ## Occupancy and Telegram schedules
 
@@ -16,7 +16,7 @@ The private backend fetches university occupancy at startup and then 60 seconds 
 
 Telegram messages and history writes keep their existing schedule (60 minutes by default), quiet hours and daily forecast behavior. The private dashboard's frequency setting controls this Telegram/history schedule, independently of website occupancy fetching. At the scheduled Telegram time, a successful occupancy fetch from the last minute can be reused.
 
-The public process copies cached occupancy from the private backend every minute, and public browsers check the public cache every minute. These layers can add delay before a new university reading appears on screen. Forecast polling is unchanged.
+Public occupancy requests reuse a private-backend reading for at most five seconds. An expired entry is refreshed from the private backend before responding; concurrent visitors share the same in-flight read, and failed reads are also throttled to five seconds. This does not fetch Durham data or write history. The background cache refresh remains every minute, public browsers poll every minute, and the Refresh data button makes an immediate public request. Occupancy API responses use no-store so browsers and intermediary caches cannot add another delay. Forecast polling is unchanged.
 
 Run the checks with `node --test tests/*.test.js`. Use an isolated working directory and a temporary database for live-data smoke tests; never seed, upload or replace the production history database with workstation data.
 

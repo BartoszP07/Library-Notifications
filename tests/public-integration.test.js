@@ -6,10 +6,21 @@ const { once } = require('node:events');
 const password = 'a sufficiently long test password';
 for (const enabled of [true, false]) test(`public service reads upstream with authentication ${enabled ? 'enabled' : 'disabled'} and rejects private actions`, async () => {
     const expected = 'Basic ' + Buffer.from(`admin:${password}`).toString('base64');
+    let value = 42;
+    let occupancyReads = 0;
+    let fail = false;
     const upstream = http.createServer((req, res) => {
         if ((enabled && req.headers.authorization !== expected) || (!enabled && req.headers.authorization)) { res.writeHead(401).end(); return; }
         res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify({ data: { value: 42 } }));
+        if (req.url === '/api/get-spaces') {
+            occupancyReads++;
+            setTimeout(() => {
+                res.statusCode = fail ? 503 : 200;
+                res.end(JSON.stringify({ data: { value } }));
+            }, 50);
+        } else {
+            res.end(JSON.stringify({ data: { value } }));
+        }
     });
     upstream.listen(0, '127.0.0.1');
     await once(upstream, 'listening');
@@ -29,6 +40,23 @@ for (const enabled of [true, false]) test(`public service reads upstream with au
         }
         assert.equal(response.status, 200);
         assert.equal((await response.json()).data.value, 42);
+        assert.equal(response.headers.get('cache-control'), 'no-store');
+        const readPublic = async () => {
+            const response = await fetch(`http://127.0.0.1:${port}/api/get-spaces`);
+            assert.equal(response.status, 200);
+            return (await response.json()).data.value;
+        };
+        value = 43;
+        await new Promise(resolve => setTimeout(resolve, 5100));
+        const refreshed = await Promise.all(Array.from({ length: 100 }, readPublic));
+        assert.ok(refreshed.every(value => value === 43));
+        assert.equal(occupancyReads, 2, 'Concurrent refreshes share one private-cache read');
+        fail = true;
+        await new Promise(resolve => setTimeout(resolve, 5100));
+        const fallback = await Promise.all(Array.from({ length: 100 }, readPublic));
+        assert.ok(fallback.every(value => value === 43), 'Failed upstream read preserves previous data');
+        await Promise.all(Array.from({ length: 100 }, readPublic));
+        assert.equal(occupancyReads, 3, 'Failure retries remain throttled');
         const page = await fetch(`http://127.0.0.1:${port}/`);
         const policy = page.headers.get('content-security-policy');
         assert.match(policy, /script-src 'self' 'nonce-[A-Za-z0-9+/]+'/);
