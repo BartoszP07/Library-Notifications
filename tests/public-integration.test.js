@@ -29,6 +29,20 @@ for (const enabled of [true, false]) test(`public service reads upstream with au
         }
         assert.equal(response.status, 200);
         assert.equal((await response.json()).data.value, 42);
+        const page = await fetch(`http://127.0.0.1:${port}/`);
+        const policy = page.headers.get('content-security-policy');
+        assert.match(policy, /script-src 'self' 'nonce-[A-Za-z0-9+/]+'/);
+        assert.doesNotMatch(policy, /script-src[^;]*'unsafe-inline'/);
+        assert.equal(page.headers.get('cache-control'), 'no-store');
+        const markup = await page.text();
+        assert.match(markup, /id="press-btn"/);
+        assert.match(markup, /id="refresh-forecast-btn"/);
+        assert.doesNotMatch(markup, /id="floor-select"/);
+        const nextPage = await fetch(`http://127.0.0.1:${port}/`);
+        assert.notEqual(nextPage.headers.get('content-security-policy'), policy);
+        const script = await fetch(`http://127.0.0.1:${port}/public.js`);
+        assert.equal(script.headers.get('cache-control'), 'no-store');
+        assert.equal((await fetch(`http://127.0.0.1:${port}/favicon.ico`)).status, 200);
         assert.equal((await fetch(`http://127.0.0.1:${port}/api/send-telegram-noti`, {method:'POST'})).status, 404);
         assert.equal((await fetch(`http://127.0.0.1:${port}/api/get-updated-spaces`, {method:'POST'})).status, 404);
     } finally { child.kill(); await new Promise(resolve => upstream.close(resolve)); }

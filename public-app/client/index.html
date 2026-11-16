@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bill Bryson · Library dashboard</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=20261116-2">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
 </head>
 <body>
 
@@ -13,7 +14,12 @@
             <div class="app-brand"><div><h1>Bill Bryson Library</h1><small>Live study spaces</small></div></div>
             <span class="workspace-badge"><span class="workspace-dot" aria-hidden="true"></span>Durham University</span>
         </div>
-        <header class="board-header" id="overview"></header>
+        <header class="board-header" id="overview">
+            <div id="library-api-div">
+                <p id="update-time-p">Site updates every minute · Hourly Telegram updates</p>
+                <button type="button" id="press-btn">Refresh data</button>
+            </div>
+        </header>
 
         <nav class="dashboard-tabs" aria-label="Dashboard sections" role="tablist">
             <button type="button" id="tab-overview" role="tab" aria-controls="panel-overview" aria-selected="true">Overview</button>
@@ -47,7 +53,7 @@
             <section class="forecast-section" id="panel-forecast" aria-labelledby="forecast-heading">
                 <div class="section-header">
                     <h2 id="forecast-heading">Today’s forecast</h2>
-                    <div class="forecast-actions"><span id="forecast-date" class="forecast-date">Today · UK time</span></div>
+                    <div class="forecast-actions"><span id="forecast-date" class="forecast-date">Today · UK time</span><button type="button" id="refresh-forecast-btn" class="map-control">Refresh forecast</button></div>
                 </div>
                 <div class="forecast-intro"><p>Expected occupancy through the day, based on recent history for this weekday.</p></div>
                 <p id="forecast-status" class="forecast-status" role="status">Loading today’s forecast…</p>
@@ -77,7 +83,6 @@
             </div>
             <div class="floor-layout">
                 <div class="floor-map-wrap">
-                    <div class="floor-picker-heading"><label for="floor-select">Choose level</label><select id="floor-select" aria-label="Library level"><option value="1">Level 1</option><option value="2" selected>Level 2 · Entrance</option><option value="3">Level 3</option><option value="4">Level 4</option></select></div>
             <div class="floor-tabs" role="group" aria-label="Choose a library floor">
                 <button type="button" class="floor-tab" data-floor="1" aria-pressed="false">Level 1</button>
                 <button type="button" class="floor-tab active" data-floor="2" aria-pressed="true">Level 2 <span>Entrance</span></button>
@@ -128,10 +133,10 @@
 
     <div id="toast-container" aria-live="polite"></div>
 
-    <script src="tabs.js"></script>
-    <script src="building.js"></script>
-    <script src="floorplan.js"></script>
-    <script src="public.js"></script>
-    <script src="forecast.js"></script>
+    <script src="tabs.js?v=20261116-2"></script>
+    <script src="building.js?v=20261116-2"></script>
+    <script src="floorplan.js?v=20261116-2"></script>
+    <script src="public.js?v=20261116-2"></script>
+    <script src="forecast.js?v=20261116-2"></script>
 </body>
 </html>

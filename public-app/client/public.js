@@ -1,7 +1,18 @@
 let library_data;
+let occupancyLoading = false;
+const refreshSpacesButton = document.getElementById('press-btn');
+
 async function loadPublicSpaces() {
+    if (occupancyLoading) {
+        return;
+    }
+
+    occupancyLoading = true;
+    refreshSpacesButton.disabled = true;
+    refreshSpacesButton.textContent = 'Refreshing…';
+
     try {
-        const response = await fetch('/api/get-spaces');
+        const response = await fetch('/api/get-spaces', { cache: 'no-store' });
         if (!response.ok) throw new Error('Occupancy unavailable');
         library_data = (await response.json()).data;
         if (!library_data) throw new Error('Occupancy unavailable');
@@ -25,7 +36,12 @@ async function loadPublicSpaces() {
         renderFloor();
     } catch (error) {
         document.getElementById('occupied-summary').textContent = 'Occupancy unavailable';
+    } finally {
+        occupancyLoading = false;
+        refreshSpacesButton.disabled = false;
+        refreshSpacesButton.textContent = 'Refresh data';
     }
 }
+refreshSpacesButton.addEventListener('click', loadPublicSpaces);
 loadPublicSpaces();
 setInterval(loadPublicSpaces, 60000);

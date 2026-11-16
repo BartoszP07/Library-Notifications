@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const { randomBytes } = require('crypto');
 const { isAuthenticationEnabled } = require('../server/private-guard');
 
 require('dotenv').config({
@@ -31,12 +32,13 @@ const routes = ['/api/get-spaces', '/api/forecast'];
 app.disable('x-powered-by');
 
 app.use((req, res, next) => {
+    const scriptNonce = randomBytes(18).toString('base64');
     res.set('X-Content-Type-Options', 'nosniff');
     res.set('Referrer-Policy', 'no-referrer');
     res.set('X-Frame-Options', 'DENY');
     res.set(
         'Content-Security-Policy',
-        "default-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; style-src 'self' 'unsafe-inline'"
+        `default-src 'self'; script-src 'self' 'nonce-${scriptNonce}'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; style-src 'self' 'unsafe-inline'`
     );
 
     next();
@@ -81,9 +83,20 @@ app.use('/api', (req, res) => {
     res.status(404).json({ error: 'Not found' });
 });
 
+app.get('/favicon.ico', (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    res.redirect('/favicon.svg');
+});
+
 app.use(express.static(path.join(__dirname, 'client'), {
     dotfiles: 'deny',
-    index: 'index.html'
+    index: 'index.html',
+    etag: false,
+    lastModified: false,
+    setHeaders: res => {
+        // Frontend releases and per-response CSP nonces must never be stale.
+        res.set('Cache-Control', 'no-store');
+    }
 }));
 
 app.listen(port, () => {

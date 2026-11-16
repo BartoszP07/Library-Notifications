@@ -418,7 +418,6 @@ const floorTabs = document.querySelectorAll(".floor-tab");
 
 function renderFloor() {
     const floor = floors[selectedFloor];
-    document.getElementById("floor-select").value = String(selectedFloor);
     document.getElementById("current-floor-label").textContent = `Viewing Level ${selectedFloor}${selectedFloor === 2 ? " · Entrance" : ""}`;
     model?.setAttribute("aria-label", `Level ${selectedFloor} library model. Select a wing. Use the controls below to rotate and zoom.`);
     const wing = selectedWing && floor.wings[selectedWing];
@@ -471,9 +470,6 @@ function renderFloor() {
 
 }
 
-document.getElementById("floor-select").addEventListener("change", event => {
-    selectModelFloor(Number(event.target.value));
-});
 floorTabs.forEach(tab => tab.addEventListener("click", () => {
     selectedFloor = Number(tab.dataset.floor);
     selectedWing = null;

@@ -60,7 +60,7 @@
         if (refreshButton) refreshButton.disabled = true;
         if (refreshButton) refreshButton.textContent = "Refreshing…";
         try {
-            const response = await fetch("/api/forecast");
+            const response = await fetch("/api/forecast", { cache: "no-store" });
             if (!response.ok) throw new Error("Forecast request failed");
             const { data } = await response.json();
             if (!data || !Array.isArray(data.hours)) throw new Error("Missing forecast data");

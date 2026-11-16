@@ -19,3 +19,5 @@ Telegram messages and history writes keep their existing schedule (60 minutes by
 The public process copies cached occupancy from the private backend every minute, and public browsers check the public cache every minute. These layers can add delay before a new university reading appears on screen. Forecast polling is unchanged.
 
 Run the checks with `node --test tests/*.test.js`. Use an isolated working directory and a temporary database for live-data smoke tests; never seed, upload or replace the production history database with workstation data.
+
+Public Refresh data and Refresh forecast buttons read the public cache and bypass the browser's API cache; they never trigger university fetches or Telegram messages. Frontend assets use `Cache-Control: no-store`, with a versioned asset URL for this release to bypass older cached copies. CSP uses a fresh script nonce on every response so Cloudflare JavaScript Detections can apply it to injected scripts without permitting arbitrary inline scripts. See [Cloudflare's CSP guidance](https://developers.cloudflare.com/cloudflare-challenges/challenge-types/javascript-detections/).
