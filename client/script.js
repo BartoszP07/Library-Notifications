@@ -18,10 +18,13 @@ function showToast(title, message, isError = false) {
 
     const toast = document.createElement("div");
     toast.className = `toast${isError ? " toast-error" : ""}`;
-    toast.innerHTML = `
-        <span class="toast-tag">${title}</span>
-        <span class="toast-msg">${message}</span>
-    `;
+    const tag = document.createElement("span");
+    tag.className = "toast-tag";
+    tag.textContent = title;
+    const body = document.createElement("span");
+    body.className = "toast-msg";
+    body.textContent = message;
+    toast.append(tag, body);
 
     toast_container.appendChild(toast);
 
@@ -364,6 +367,13 @@ if (send_data_btn) {
     send_data_btn.addEventListener("click", handleSendServerData);
 }
 
+function setMetric(element, value, label) {
+    const metric = document.createElement("span");
+    metric.className = "metric-value";
+    metric.textContent = String(value);
+    element.replaceChildren(metric, ` ${label}`);
+}
+
 async function GetSpaces(){
     try{
         const response = await fetch("/api/get-spaces");
@@ -379,12 +389,10 @@ async function GetSpaces(){
         // Update variables
         // Check if the data is defined
         if (data){
-            total_spaces_p.innerHTML = `<span class="metric-value">${data.total}</span> Total Spaces`;
-            free_spaces_p.innerHTML = `<span class="metric-value">${data.free}</span> Free Spaces`;
-            free_spaces_percent_p.innerHTML = `<span class="metric-value">${data.freePercentage}%</span> Free`;
-            if (usage_status_p) {
-                usage_status_p.innerHTML = `<span class="metric-value">${data.usage ?? "--"}</span> Usage Level`;
-            }
+            setMetric(total_spaces_p, data.total, "Total Spaces");
+            setMetric(free_spaces_p, data.free, "Free Spaces");
+            setMetric(free_spaces_percent_p, `${data.freePercentage}%`, "Free");
+            if (usage_status_p) setMetric(usage_status_p, data.usage ?? "--", "Usage Level");
 
             const occupied = Math.max(0, data.total - data.free);
             const occupiedPct = data.total > 0 ? Math.min(100, Math.round((occupied / data.total) * 100)) : 0;

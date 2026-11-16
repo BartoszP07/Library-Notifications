@@ -24,7 +24,15 @@
             </div>
         </header>
 
-        <section class="occupancy-section">
+        <nav class="dashboard-tabs" aria-label="Dashboard sections" role="tablist">
+            <button type="button" id="tab-overview" role="tab" aria-controls="panel-overview" aria-selected="true">Overview</button>
+            <button type="button" id="tab-forecast" role="tab" aria-controls="panel-forecast" aria-selected="false" tabindex="-1">Forecast</button>
+            <button type="button" id="tab-explore" role="tab" aria-controls="panel-explore" aria-selected="false" tabindex="-1">Explore</button>
+            <button type="button" id="tab-notifications" role="tab" aria-controls="panel-notifications" aria-selected="false" tabindex="-1">Notifications</button>
+            <button type="button" id="tab-settings" role="tab" aria-controls="panel-settings" aria-selected="false" tabindex="-1">Settings</button>
+        </nav>
+
+        <section class="occupancy-section" id="panel-overview" role="tabpanel" aria-labelledby="tab-overview">
             <div class="section-header">
                 <span>Live occupancy</span>
                 <span id="occupied-summary">-- / -- OCCUPIED</span>
@@ -42,7 +50,7 @@
             </div>
         </section>
 
-        <section class="forecast-section" aria-labelledby="forecast-heading">
+        <section class="forecast-section" id="panel-forecast" role="tabpanel" aria-labelledby="tab-forecast">
             <div class="section-header">
                 <span id="forecast-heading">Today’s forecast</span>
                 <div class="forecast-actions"><span id="forecast-date" class="forecast-date">Today · UK time</span><button type="button" id="refresh-forecast-btn" class="map-control">Refresh forecast</button></div>
@@ -61,7 +69,7 @@
             </div>
         </section>
 
-        <section id="explore" class="floor-section" aria-labelledby="floor-heading">
+        <section id="panel-explore" class="floor-section" role="tabpanel" aria-labelledby="tab-explore">
             <div class="section-header">
                 <span id="floor-heading">Explore the library</span>
                 <span class="floor-caption">INTERACTIVE FLOOR GUIDE</span>
@@ -121,7 +129,7 @@
             <p class="floor-disclaimer">Based on the university floor plan, updated October 2025. Exterior, heights and landscaping are illustrative. Floor and wing colours reflect live section occupancy.</p>
         </section>
 
-        <section id="notifications" class="dispatch-section">
+        <section id="panel-notifications" class="dispatch-section" role="tabpanel" aria-labelledby="tab-notifications">
             <div class="section-header">
                 <span>Telegram notifications</span>
                 <div class="chat-target-switcher" role="group" aria-label="Telegram Chat Target">
@@ -137,7 +145,7 @@
             </div>
         </section>
 
-        <section id="settings" class="settings-section">
+        <section id="panel-settings" class="settings-section" role="tabpanel" aria-labelledby="tab-settings">
             <div class="section-header">
                 <span>Make it work for you</span>
                 <span id="quiet-status-summary">QUIET: 12 AM - 6 AM</span>
@@ -231,6 +239,7 @@
 
     <div id="toast-container" aria-live="polite"></div>
 
+    <script src="tabs.js"></script>
     <script src="building.js"></script>
     <script src="floorplan.js"></script>
     <script src="script.js"></script>

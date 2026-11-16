@@ -4,9 +4,11 @@ const path = require("path");
 const dotenv = require("dotenv").config();
 const sqlite3 = require("sqlite3");
 const { open } = require("sqlite");
+const { makePrivateGuard, isAuthenticationEnabled } = require("./private-guard");
 
 const app = express();
 
+app.use(makePrivateGuard(process.env.LIBRARY_ADMIN_PASSWORD, isAuthenticationEnabled(process.env.LIBRARY_AUTH_ENABLED)));
 app.use(express.static(path.join(__dirname, "../client")));
 app.use(express.json());
 
@@ -677,11 +679,19 @@ async function Start(){
 
 Start();
 
-app.listen(process.env.SERVER_PORT, async function(){
-    console.log(`localhost:${process.env.SERVER_PORT}`);
-    // Get spaces
+const tailnetAddress = process.env.SERVER_TAILSCALE_IP;
+if (tailnetAddress && !/^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.(?:\d{1,3})\.(?:\d{1,3})$/.test(tailnetAddress)) {
+    throw new Error("SERVER_TAILSCALE_IP must be this machine's Tailscale IPv4 address (100.64.0.0/10).");
+}
+app.listen(process.env.SERVER_PORT || 3001, "127.0.0.1", async function(){
+    console.log(`Private dashboard on 127.0.0.1:${process.env.SERVER_PORT}`);
     await GetLibrarySpaces();
-})
+});
+if (tailnetAddress) {
+    app.listen(process.env.SERVER_PORT || 3001, tailnetAddress, () => {
+        console.log(`Private dashboard on Tailscale address ${tailnetAddress}:${process.env.SERVER_PORT}`);
+    });
+}
 
 
 async function seedTestDatabase() {

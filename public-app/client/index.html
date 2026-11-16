@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bill Bryson · Library dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <main class="board" id="dashboard">
+        <div class="app-topbar">
+            <div class="app-brand"><span>Bill Bryson<small>Library dashboard</small></span></div>
+            <span class="workspace-badge"><span class="workspace-dot" aria-hidden="true"></span>Durham University</span>
+        </div>
+        <header class="board-header" id="overview">
+            <div class="title-div">
+                <span class="board-tag">YOUR LIBRARY, AT A GLANCE</span>
+                <h1>Library overview<span class="heading-dot">.</span></h1><p class="page-subtitle">Find a space. Explore a floor. Stay in the loop.</p>
+            </div>
+
+        </header>
+
+        <nav class="dashboard-tabs" aria-label="Dashboard sections" role="tablist">
+            <button type="button" id="tab-overview" role="tab" aria-controls="panel-overview" aria-selected="true">Overview</button>
+            <button type="button" id="tab-forecast" role="tab" aria-controls="panel-forecast" aria-selected="false" tabindex="-1">Forecast</button>
+            <button type="button" id="tab-explore" role="tab" aria-controls="panel-explore" aria-selected="false" tabindex="-1">Explore</button>
+        </nav>
+
+        <section class="occupancy-section" id="panel-overview" role="tabpanel" aria-labelledby="tab-overview">
+            <div class="section-header">
+                <span>Live occupancy</span>
+                <span id="occupied-summary">-- / -- OCCUPIED</span>
+            </div>
+
+            <div class="meter-track" aria-hidden="true">
+                <div class="meter-fill" id="occupancy-meter-fill"></div>
+            </div>
+
+            <div id="library-data-div">
+                <p class="lib-info-txt" id="free-spaces"><span class="metric-value">--</span> Free Spaces</p>
+                <p class="lib-info-txt" id="free-spaces-percent"><span class="metric-value">--%</span> Free</p>
+                <p class="lib-info-txt" id="total-spaces"><span class="metric-value">--</span> Total Spaces</p>
+                <p class="lib-info-txt" id="usage-status" data-usage-tier="unknown"><span class="metric-value">--</span> Usage Level</p>
+            </div>
+        </section>
+
+        <section class="forecast-section" id="panel-forecast" role="tabpanel" aria-labelledby="tab-forecast">
+            <div class="section-header">
+                <span id="forecast-heading">Today’s forecast</span>
+                <div class="forecast-actions"><span id="forecast-date" class="forecast-date">Today · UK time</span></div>
+            </div>
+            <div class="forecast-intro"><h2>Plan a quieter visit.</h2><p>Expected occupancy through the day, based on recent history for this weekday.</p></div>
+            <p id="forecast-status" class="forecast-status" role="status">Loading today’s forecast…</p>
+            <div id="forecast-content" hidden>
+                <div class="forecast-chart-heading"><span>Predicted people</span><span id="forecast-scale-label"></span></div>
+                <ol id="forecast-chart" class="forecast-chart" aria-label="Hourly occupancy forecast"></ol>
+                <div class="forecast-key"><span><i class="forecast-dot low"></i>Low</span><span><i class="forecast-dot normal"></i>Normal</span><span><i class="forecast-dot high"></i>High</span><span><i class="forecast-dot unknown"></i>No history</span></div>
+                <div class="forecast-windows">
+                    <div class="forecast-window quiet"><span class="forecast-window-label">Best study windows</span><p id="forecast-quiet"></p></div>
+                    <div class="forecast-window peak"><span class="forecast-window-label">Peak periods</span><p id="forecast-peak"></p></div>
+                </div>
+                <p id="forecast-note" class="forecast-note"></p>
+            </div>
+        </section>
+
+        <section id="panel-explore" class="floor-section" role="tabpanel" aria-labelledby="tab-explore">
+            <div class="section-header">
+                <span id="floor-heading">Explore the library</span>
+                <span class="floor-caption">INTERACTIVE FLOOR GUIDE</span>
+            </div>
+            <div class="floor-intro">
+                <div><h2>A space for every study session.</h2><p>Explore the building and select a level to find your next study spot.</p></div>
+                <span class="floor-north" aria-hidden="true">↑ N</span>
+            </div>
+            <div class="map-toolbar">
+                <button type="button" id="reset-map" class="map-control">Reset view</button>
+            </div>
+            <div class="floor-layout">
+                <div class="floor-map-wrap">
+                    <div class="floor-picker-heading"><label for="floor-select">CHOOSE LEVEL</label><select id="floor-select" aria-label="Library level"><option value="1">Level 1</option><option value="2" selected>Level 2 · Entrance</option><option value="3">Level 3</option><option value="4">Level 4</option></select></div>
+            <div class="floor-tabs" role="group" aria-label="Choose a library floor">
+                <button type="button" class="floor-tab" data-floor="1" aria-pressed="false">Level 1</button>
+                <button type="button" class="floor-tab active" data-floor="2" aria-pressed="true">Level 2 <span>Entrance</span></button>
+                <button type="button" class="floor-tab" data-floor="3" aria-pressed="false">Level 3</button>
+                <button type="button" class="floor-tab" data-floor="4" aria-pressed="false">Level 4</button>
+            </div>
+                    <p id="current-floor-label" class="current-floor-label">Viewing Level 2 · Entrance</p>
+                    <div id="library-3d">
+                        <p id="building-description">Explore the whole building, or cut away to your selected level.</p>
+                        <label id="cutaway-control" class="cutaway-control"><input type="checkbox" id="building-cutaway"> Cut away to selected level</label>
+                        <svg id="building-map" viewBox="0 0 620 520" role="group" aria-label="Library floor model. Select a wing. Use the controls below to rotate and zoom."></svg>
+                        <div class="model-controls">
+                            <label>Rotate <input id="map-rotation" type="range" min="-180" max="180" value="-25" aria-label="Rotate building"></label>
+                            <label>Tilt <input id="map-tilt" type="range" min="25" max="75" value="55" aria-label="Tilt building"></label>
+                            <label>Zoom <input id="map-zoom" type="range" min="75" max="150" value="100" aria-label="Zoom building"></label>
+                        </div>
+                        <p class="model-hint">Drag to rotate · Select a level, then a wing</p>
+                    </div>
+                    <div class="occupancy-legend" id="occupancy-legend" aria-label="Occupancy colour key">
+                        <div class="legend-scale">
+                            <div class="legend-gradient-bar" aria-hidden="true"></div>
+                            <div class="legend-scale-labels">
+                                <span>0% · <span id="legend-low-label">Low</span></span>
+                                <span id="legend-normal-label">Normal</span>
+                                <span><span id="legend-high-label">High</span> · 100%</span>
+                            </div>
+                        </div>
+                        <span class="legend-item"><span class="legend-swatch swatch-unavailable"></span>Unavailable / Staff</span>
+                    </div>
+                    <div class="map-note">SCHEMATIC · NOT TO SCALE <span id="map-view-label">3D / BUILDING</span></div>
+                </div>
+                <div class="floor-details" aria-live="polite">
+                    <span class="details-eyebrow" id="floor-detail-kicker">LEVEL 2 // OVERVIEW</span>
+                    <h3 id="floor-detail-title">The entrance floor</h3>
+                    <p id="floor-detail-description"></p>
+                    <div id="floor-occupancy-card" class="floor-occupancy-card" hidden></div>
+                    <div class="detail-rule"></div>
+                    <span class="details-label" id="floor-list-label">ON THIS FLOOR</span>
+                    <ul id="floor-detail-list"></ul>
+                    <p class="detail-hint">Select a wing on the map to explore it.</p>
+                </div>
+            </div>
+            <p class="floor-disclaimer">Based on the university floor plan, updated October 2025. Exterior, heights and landscaping are illustrative. Floor and wing colours reflect live section occupancy.</p>
+        </section>
+
+        <footer class="dashboard-footer"><span>Bill Bryson Library <span aria-hidden="true">/</span> Durham University</span></footer>
+    </main>
+
+    <div id="toast-container" aria-live="polite"></div>
+
+    <script src="tabs.js"></script>
+    <script src="building.js"></script>
+    <script src="floorplan.js"></script>
+    <script src="public.js"></script>
+    <script src="forecast.js"></script>
+</body>
+</html>
