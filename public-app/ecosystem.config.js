@@ -6,8 +6,7 @@ module.exports = {
            cwd: "/home/bpio07/Library-Notifications",
            env: {
     		NODE_ENV: "production",
-   		SERVER_PORT: "3005",
-		PRIVATE_PORT: "3001"
+   		PUBLIC_PORT: "3004"
 		},
 	  },
 	],
